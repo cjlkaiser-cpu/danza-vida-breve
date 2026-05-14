@@ -899,6 +899,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         setupAudioPlayer();
         setupDuoMode();
         setupAutoFollow();
+        setupMarkTime();
         setupScorePageNav();
         setupWaveformCanvas();
         setupRefVideoControls();
@@ -1018,6 +1019,7 @@ async function loadPasaje(index) {
     if (pageInfo) pageInfo.textContent = `${index + 1} / ${PASAJES.length}`;
     if (scorePrev) scorePrev.disabled = index === 0;
     if (scoreNext) scoreNext.disabled = index === PASAJES.length - 1;
+    updateMarkHint(index);
 
     expandSection(pasaje.seccion);
 
@@ -2391,6 +2393,73 @@ function seekToPasaje(index) {
     if (audio && t !== undefined) audio.currentTime = t;
 }
 
+// ── Tiempos de página editables (localStorage) ─────────────────
+const LS_TIMES_KEY = 'danza_page_times';
+
+function loadPageTimes() {
+    try { return JSON.parse(localStorage.getItem(LS_TIMES_KEY)) || {}; }
+    catch { return {}; }
+}
+
+function savePageTime(index, seconds) {
+    const times = loadPageTimes();
+    times[index] = seconds;
+    localStorage.setItem(LS_TIMES_KEY, JSON.stringify(times));
+}
+
+function getStartTime(index) {
+    const overrides = loadPageTimes();
+    return overrides[index] !== undefined ? overrides[index] : PASAJES[index].startTime;
+}
+
+// Versión ligera: solo cambia imagen y nav, sin DB ni renders pesados
+function switchScorePage(index) {
+    if (index < 0 || index >= PASAJES.length || index === currentPasaje) return;
+    currentPasaje = index;
+    const pasaje = PASAJES[index];
+    if (elements.manuscriptImg) elements.manuscriptImg.src = pasaje.imagen;
+    const pageInfo  = document.getElementById('pageNavInfo');
+    const scorePrev = document.getElementById('scorePrevBtn');
+    const scoreNext = document.getElementById('scoreNextBtn');
+    if (pageInfo)  pageInfo.textContent   = `${index + 1} / ${PASAJES.length}`;
+    if (scorePrev) scorePrev.disabled     = index === 0;
+    if (scoreNext) scoreNext.disabled     = index === PASAJES.length - 1;
+    document.querySelectorAll('.variation-item').forEach(item => {
+        item.classList.toggle('active', parseInt(item.dataset.index) === index);
+    });
+    expandSection(pasaje.seccion);
+    updateMarkHint(index);
+}
+
+function updateMarkHint(index) {
+    const hint = document.getElementById('pageMarkHint');
+    if (!hint) return;
+    const overrides = loadPageTimes();
+    const t = overrides[index] !== undefined ? overrides[index] : PASAJES[index].startTime;
+    const orig = PASAJES[index].startTime;
+    const isCustom = overrides[index] !== undefined;
+    hint.textContent = isCustom
+        ? `Pág ${index + 1} · inicio: ${t.toFixed(1)}s (original: ${orig}s)`
+        : `Pág ${index + 1} · inicio: ${t}s`;
+}
+
+function setupMarkTime() {
+    const btn   = document.getElementById('markTimeBtn');
+    const audio = document.getElementById('refVideo');
+    if (!btn || !audio) return;
+
+    btn.addEventListener('click', () => {
+        const t = parseFloat(audio.currentTime.toFixed(2));
+        savePageTime(currentPasaje, t);
+        updateMarkHint(currentPasaje);
+        btn.classList.add('marked');
+        showNotification(`Pág ${currentPasaje + 1} → ${t}s`, 'success');
+        setTimeout(() => btn.classList.remove('marked'), 1200);
+    });
+
+    updateMarkHint(0);
+}
+
 function setupAutoFollow() {
     const btn   = document.getElementById('autoFollowBtn');
     const audio = document.getElementById('refVideo');
@@ -2409,10 +2478,10 @@ function setupAutoFollow() {
         const t = audio.currentTime;
         let idx = 0;
         for (let i = 0; i < PASAJES.length; i++) {
-            if (PASAJES[i].startTime <= t) idx = i;
+            if (getStartTime(i) <= t) idx = i;
             else break;
         }
-        if (idx !== currentPasaje) loadPasaje(idx);
+        if (idx !== currentPasaje) switchScorePage(idx);
     });
 }
 

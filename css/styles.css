@@ -1918,6 +1918,31 @@ body {
     color: #fff;
 }
 
+.page-mark-btn {
+    border-color: #7c3aed;
+    color: #a78bfa;
+}
+.page-mark-btn:hover:not(:disabled) {
+    background: #7c3aed;
+    border-color: #7c3aed;
+    color: #fff;
+}
+.page-mark-btn.marked {
+    background: #7c3aed;
+    border-color: #7c3aed;
+    color: #fff;
+}
+
+.page-mark-hint {
+    font-size: 0.7rem;
+    color: #a78bfa;
+    min-height: 1rem;
+    margin-top: 0.3rem;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    font-family: monospace;
+}
+
 .page-nav-info {
     font-size: 0.78rem;
     color: var(--text-muted);
