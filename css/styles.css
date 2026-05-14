@@ -2093,6 +2093,270 @@ body {
     font-variant-numeric: tabular-nums;
 }
 
+/* ==========================================
+   DÚO ASÍNCRONO
+   ========================================== */
+
+.duo-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius);
+    margin-top: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.duo-bar-label {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+}
+
+.duo-guitar-sel {
+    display: flex;
+    gap: 0.25rem;
+}
+
+.duo-g-btn {
+    padding: 0.2rem 0.55rem;
+    font-size: 0.72rem;
+    font-weight: 700;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    background: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: 'Inter', sans-serif;
+}
+.duo-g-btn:hover { color: var(--text-primary); border-color: var(--accent); }
+.duo-g-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+.duo-cc-input {
+    width: 3.5rem;
+    padding: 0.2rem 0.4rem;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    color: var(--text-primary);
+    font-size: 0.8rem;
+    font-family: monospace;
+    text-align: center;
+    -moz-appearance: textfield;
+}
+.duo-cc-input::-webkit-outer-spin-button,
+.duo-cc-input::-webkit-inner-spin-button { -webkit-appearance: none; }
+.duo-cc-input:focus { outline: none; border-color: var(--accent); }
+
+.duo-cc-sep {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+/* Partner load button */
+.duo-partner-area {
+    margin-top: 1rem;
+    display: flex;
+    justify-content: center;
+}
+
+.duo-partner-btn {
+    padding: 0.45rem 1.1rem;
+    background: transparent;
+    border: 1px dashed var(--border-color);
+    border-radius: var(--radius);
+    color: var(--text-muted);
+    font-size: 0.82rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: 'Inter', sans-serif;
+}
+.duo-partner-btn:hover {
+    border-color: var(--accent);
+    color: var(--accent-light);
+    border-style: solid;
+}
+
+/* Split screen */
+.duo-splitscreen {
+    margin-top: 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    background: var(--bg-primary);
+}
+
+.duo-ss-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.6rem 1rem;
+    background: var(--bg-tertiary);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.duo-ss-title {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+}
+
+.duo-close-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    font-size: 0.78rem;
+    cursor: pointer;
+    padding: 0.15rem 0.5rem;
+    border-radius: var(--radius);
+    transition: all 0.15s;
+}
+.duo-close-btn:hover { background: rgba(239,68,68,0.12); color: #ef4444; }
+
+.duo-videos-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+    background: #000;
+}
+
+.duo-slot {
+    position: relative;
+    aspect-ratio: 16/9;
+    background: #111;
+    overflow: hidden;
+}
+.duo-slot + .duo-slot {
+    border-left: 2px solid var(--bg-secondary);
+}
+
+.duo-slot-label {
+    position: absolute;
+    top: 0.4rem;
+    left: 0.5rem;
+    z-index: 2;
+    font-size: 0.68rem;
+    font-weight: 700;
+    background: rgba(0,0,0,0.65);
+    color: #fff;
+    padding: 0.15rem 0.45rem;
+    border-radius: 3px;
+    letter-spacing: 0.04em;
+    pointer-events: none;
+}
+
+.duo-video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.duo-slot-hint {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 1rem;
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    pointer-events: none;
+}
+
+/* Sync bar */
+.duo-sync-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.6rem 1rem;
+    background: var(--bg-tertiary);
+    border-top: 1px solid var(--border-color);
+    flex-wrap: wrap;
+}
+
+.duo-play-btn {
+    padding: 0.35rem 0.9rem;
+    background: var(--accent);
+    border: none;
+    border-radius: var(--radius);
+    color: #fff;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+.duo-play-btn:hover { background: var(--accent-hover); }
+.duo-play-btn.playing { background: #dc2626; }
+
+.duo-offset-wrap {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex: 1;
+    min-width: 0;
+}
+
+.duo-offset-label {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+#duoOffsetSlider {
+    flex: 1;
+    accent-color: var(--accent);
+    height: 4px;
+    cursor: pointer;
+    min-width: 0;
+}
+
+.duo-offset-val {
+    font-size: 0.72rem;
+    color: var(--accent-light);
+    font-family: monospace;
+    font-variant-numeric: tabular-nums;
+    min-width: 4rem;
+    text-align: right;
+    flex-shrink: 0;
+}
+
+/* "▷ Dúo" button in video list */
+.duo-use-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: 1px solid var(--border-color);
+    background: transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 700;
+    transition: all 0.2s;
+    flex-shrink: 0;
+}
+.duo-use-btn:hover { background: var(--accent); border-color: var(--accent); color: #fff; }
+.duo-use-btn.in-duo { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+@media (max-width: 768px) {
+    .duo-videos-row { grid-template-columns: 1fr; }
+    .duo-slot + .duo-slot { border-left: none; border-top: 2px solid var(--bg-secondary); }
+}
+
 .mix-solo {
     font-size: 0.68rem;
     padding: 0.15rem 0.45rem;

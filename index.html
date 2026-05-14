@@ -10,7 +10,7 @@
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎸</text></svg>">
     <meta name="theme-color" content="#0f172a">
     <title>Danza Espagnole · De Falla / Pujol — Plan de Estudio</title>
-    <link rel="stylesheet" href="css/styles.css?v=11">
+    <link rel="stylesheet" href="css/styles.css?v=12">
 </head>
 <body>
     <div class="app-container">
@@ -297,6 +297,18 @@
                                 <span>Subir archivo</span>
                             </button>
                         </div>
+                        <!-- Dúo bar: guitarra + compás -->
+                        <div class="duo-bar" id="duoBar">
+                            <span class="duo-bar-label">Dúo ·</span>
+                            <div class="duo-guitar-sel">
+                                <button class="duo-g-btn active" data-g="I">G. I</button>
+                                <button class="duo-g-btn" data-g="II">G. II</button>
+                            </div>
+                            <span class="duo-bar-label">cc.</span>
+                            <input type="number" id="duoCcFrom" class="duo-cc-input" min="1" max="999" value="1">
+                            <span class="duo-bar-sep">—</span>
+                            <input type="number" id="duoCcTo" class="duo-cc-input" min="1" max="999" value="16">
+                        </div>
                         <div class="recorder-active" id="recorderActive" style="display: none;">
                             <div class="recording-indicator">
                                 <span class="rec-dot"></span>
@@ -321,6 +333,39 @@
                         </div>
                         <div class="recordings-list" id="recordingsList"></div>
                         <div class="recordings-list" id="videosList"></div>
+
+                        <!-- Cargar vídeo del compañero -->
+                        <div class="duo-partner-area" id="duoPartnerArea">
+                            <input type="file" id="duoPartnerInput" accept="video/*" hidden>
+                            <button class="duo-partner-btn" id="duoPartnerBtn">🎸🎸 Cargar vídeo del compañero</button>
+                        </div>
+
+                        <!-- Split screen dúo -->
+                        <div class="duo-splitscreen" id="duoSplitscreen" style="display:none">
+                            <div class="duo-ss-head">
+                                <span class="duo-ss-title">Vista dúo</span>
+                                <button class="duo-close-btn" id="duoCloseBtn">✕ Cerrar</button>
+                            </div>
+                            <div class="duo-videos-row">
+                                <div class="duo-slot">
+                                    <div class="duo-slot-label" id="duoLabelA">Compañero</div>
+                                    <video class="duo-video" id="duoVideoA" playsinline></video>
+                                </div>
+                                <div class="duo-slot">
+                                    <div class="duo-slot-label" id="duoLabelB">Mi grabación</div>
+                                    <video class="duo-video" id="duoVideoB" playsinline></video>
+                                    <p class="duo-slot-hint" id="duoSlotBHint">Pulsa "▷ Dúo" en una de tus grabaciones</p>
+                                </div>
+                            </div>
+                            <div class="duo-sync-bar">
+                                <button class="duo-play-btn" id="duoPlayBtn">▶ Reproducir juntos</button>
+                                <div class="duo-offset-wrap">
+                                    <span class="duo-offset-label">Compañero ±</span>
+                                    <input type="range" id="duoOffsetSlider" min="-3000" max="3000" step="50" value="0">
+                                    <span class="duo-offset-val" id="duoOffsetVal">0 ms</span>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -378,6 +423,6 @@
 </div>
     <script src="js/data.js?v=7"></script>
     <script src="js/waveforms.js?v=1"></script>
-    <script src="js/app.js?v=18"></script>
+    <script src="js/app.js?v=19"></script>
 </body>
 </html>

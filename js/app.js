@@ -547,7 +547,7 @@ async function startVideoRecording() {
             videoStream.getTracks().forEach(t => t.stop());
             elements.webcamPreview.srcObject = null;
             const videoBlob = new Blob(videoChunks, { type: videoRecorder.mimeType || mimeType });
-            await saveVideoToDB(currentPasaje, videoBlob);
+            await saveVideoToDB(currentPasaje, videoBlob, getDuoName());
             elements.audioOptions.style.display = 'flex';
             elements.videoRecorderActive.style.display = 'none';
             await renderVideosList(currentPasaje);
@@ -630,6 +630,7 @@ async function renderVideosList(pasajeId) {
                 </div>
                 <div class="recording-actions">
                     <button class="play-btn play-video-btn" data-video-id="${rec.videoId}" title="Reproducir">▶</button>
+                    <button class="duo-use-btn" data-video-id="${rec.videoId}" title="Usar en dúo">▷</button>
                     <button class="download-btn download-video-btn" data-video-id="${rec.videoId}" title="Descargar">⬇</button>
                     <button class="delete-recording-btn delete-video-btn" data-video-id="${rec.videoId}" title="Eliminar">✕</button>
                 </div>
@@ -661,6 +662,24 @@ async function renderVideosList(pasajeId) {
                 await renderVideosList(pasajeId);
                 showNotification('Vídeo eliminado', 'info');
             }
+        });
+    });
+
+    container.querySelectorAll('.duo-use-btn').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+            const rec = videos.find(v => v.videoId === e.currentTarget.dataset.videoId);
+            if (!rec) return;
+            const url = URL.createObjectURL(rec.video);
+            const videoB = document.getElementById('duoVideoB');
+            if (videoB._duoBlobUrl) URL.revokeObjectURL(videoB._duoBlobUrl);
+            videoB._duoBlobUrl = url;
+            videoB.src = url;
+            document.getElementById('duoLabelB').textContent = rec.name;
+            document.getElementById('duoSlotBHint').style.display = 'none';
+            document.getElementById('duoSplitscreen').style.display = 'block';
+            container.querySelectorAll('.duo-use-btn').forEach(b => b.classList.remove('in-duo'));
+            e.currentTarget.classList.add('in-duo');
+            showNotification(`${rec.name} → slot dúo`, 'success');
         });
     });
 }
@@ -878,6 +897,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         setupMetroMoreBtn();
         setupTempoSaveBtn();
         setupAudioPlayer();
+        setupDuoMode();
         setupScorePageNav();
         setupWaveformCanvas();
         setupRefVideoControls();
@@ -2138,6 +2158,18 @@ function stopMirror() {
 // AUDIO PLAYER + SELECTOR DE FUENTE
 // ==========================================
 
+// ── Estado dúo ──────────────────────────────────────────────────
+let duoGuitar = 'I';
+let duoCcFrom = 1;
+let duoCcTo   = 16;
+let partnerVideoUrl = null;
+
+function getDuoName() {
+    const from = parseInt(document.getElementById('duoCcFrom')?.value) || duoCcFrom;
+    const to   = parseInt(document.getElementById('duoCcTo')?.value)   || duoCcTo;
+    return `G.${duoGuitar} · cc.${from}–${to}`;
+}
+
 const SOURCES = {
     both:    'media/danza-vida-breve-1080p.mp4',
     guitar1: 'media/guitar1.mp3',
@@ -2219,6 +2251,126 @@ function setupAudioPlayer() {
             const labels = { both: 'Ambas guitarras', guitar1: 'Guitarra I sola', guitar2: 'Guitarra II sola' };
             showNotification(labels[src], 'success');
         });
+    });
+}
+
+// ==========================================
+// DÚO ASÍNCRONO
+// ==========================================
+
+function setupDuoMode() {
+    // Guitar selector
+    document.querySelectorAll('.duo-g-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            duoGuitar = btn.dataset.g;
+            document.querySelectorAll('.duo-g-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+        });
+    });
+
+    // Compás inputs
+    document.getElementById('duoCcFrom')?.addEventListener('change', e => {
+        duoCcFrom = parseInt(e.target.value) || 1;
+    });
+    document.getElementById('duoCcTo')?.addEventListener('change', e => {
+        duoCcTo = parseInt(e.target.value) || 16;
+    });
+
+    // Partner load
+    const partnerBtn   = document.getElementById('duoPartnerBtn');
+    const partnerInput = document.getElementById('duoPartnerInput');
+    partnerBtn?.addEventListener('click', () => partnerInput.click());
+    partnerInput?.addEventListener('change', e => {
+        const file = e.target.files[0];
+        if (!file) return;
+        if (partnerVideoUrl) URL.revokeObjectURL(partnerVideoUrl);
+        partnerVideoUrl = URL.createObjectURL(file);
+
+        // Parse metadata from filename
+        const n = file.name;
+        const gMatch  = n.match(/g[_.]?(i{1,2})/i);
+        const ccMatch = n.match(/cc[_.]?(\d+)[_\-–](\d+)/i);
+        const guitar  = gMatch  ? `G.${gMatch[1].toUpperCase()}` : 'Compañero';
+        const ccInfo  = ccMatch ? ` · cc.${ccMatch[1]}–${ccMatch[2]}` : '';
+
+        const videoA = document.getElementById('duoVideoA');
+        videoA.src   = partnerVideoUrl;
+        document.getElementById('duoLabelA').textContent = guitar + ccInfo;
+        document.getElementById('duoSplitscreen').style.display = 'block';
+        partnerBtn.textContent = `🎸🎸 ${file.name.length > 28 ? file.name.slice(0, 25) + '…' : file.name}`;
+        e.target.value = '';
+        showNotification(`Vídeo del compañero cargado (${guitar}${ccInfo})`, 'success');
+    });
+
+    // Close split screen
+    document.getElementById('duoCloseBtn')?.addEventListener('click', () => {
+        document.getElementById('duoSplitscreen').style.display = 'none';
+        const videoA = document.getElementById('duoVideoA');
+        const videoB = document.getElementById('duoVideoB');
+        videoA.pause(); videoB.pause();
+        if (partnerVideoUrl) { URL.revokeObjectURL(partnerVideoUrl); partnerVideoUrl = null; }
+        if (videoB._duoBlobUrl) { URL.revokeObjectURL(videoB._duoBlobUrl); videoB._duoBlobUrl = null; }
+        videoA.src = ''; videoB.src = '';
+        document.getElementById('duoSlotBHint').style.display = 'flex';
+        document.getElementById('duoPartnerBtn').textContent = '🎸🎸 Cargar vídeo del compañero';
+        document.getElementById('duoOffsetSlider').value = 0;
+        document.getElementById('duoOffsetVal').textContent = '0 ms';
+        document.querySelectorAll('.duo-use-btn').forEach(b => b.classList.remove('in-duo'));
+    });
+
+    // Sync play
+    let duoPlaying = false;
+    let duoOffsetTimer = null;
+
+    document.getElementById('duoPlayBtn')?.addEventListener('click', () => {
+        const videoA   = document.getElementById('duoVideoA');
+        const videoB   = document.getElementById('duoVideoB');
+        const playBtn  = document.getElementById('duoPlayBtn');
+        const offsetMs = parseInt(document.getElementById('duoOffsetSlider').value);
+
+        if (duoPlaying) {
+            videoA.pause(); videoB.pause();
+            clearTimeout(duoOffsetTimer);
+            duoPlaying = false;
+            playBtn.textContent = '▶ Reproducir juntos';
+            playBtn.classList.remove('playing');
+            return;
+        }
+
+        videoA.currentTime = 0;
+        videoB.currentTime = 0;
+        duoPlaying = true;
+        playBtn.textContent = '⏸ Pausar';
+        playBtn.classList.add('playing');
+
+        if (offsetMs === 0) {
+            videoA.play().catch(() => {});
+            videoB.play().catch(() => {});
+        } else if (offsetMs > 0) {
+            // Compañero (A) arranca tarde — B empieza ya
+            videoB.play().catch(() => {});
+            duoOffsetTimer = setTimeout(() => videoA.play().catch(() => {}), offsetMs);
+        } else {
+            // Compañero (A) arranca antes — A empieza ya
+            videoA.play().catch(() => {});
+            duoOffsetTimer = setTimeout(() => videoB.play().catch(() => {}), -offsetMs);
+        }
+
+        // Reset cuando terminen
+        const onEnd = () => {
+            duoPlaying = false;
+            playBtn.textContent = '▶ Reproducir juntos';
+            playBtn.classList.remove('playing');
+        };
+        videoA.addEventListener('ended', onEnd, { once: true });
+        videoB.addEventListener('ended', onEnd, { once: true });
+    });
+
+    // Offset slider
+    document.getElementById('duoOffsetSlider')?.addEventListener('input', e => {
+        const ms  = parseInt(e.target.value);
+        const val = document.getElementById('duoOffsetVal');
+        val.textContent = ms === 0 ? '0 ms' : (ms > 0 ? `+${ms} ms` : `${ms} ms`);
     });
 }
 
