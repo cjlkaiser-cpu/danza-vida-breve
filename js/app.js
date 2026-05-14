@@ -1146,13 +1146,8 @@ function setupEventListeners() {
 
     document.addEventListener('keydown', (e) => {
         if (e.target.tagName === 'TEXTAREA' || e.target.tagName === 'INPUT') return;
-        if (e.key === 'ArrowLeft' && currentPasaje > 0) {
-            loadPasaje(currentPasaje - 1);
-            seekToPasaje(currentPasaje);
-        } else if (e.key === 'ArrowRight' && currentPasaje < PASAJES.length - 1) {
-            loadPasaje(currentPasaje + 1);
-            seekToPasaje(currentPasaje);
-        }
+        if (e.key === 'ArrowLeft' && currentPasaje > 0) loadPasaje(currentPasaje - 1);
+        else if (e.key === 'ArrowRight' && currentPasaje < PASAJES.length - 1) loadPasaje(currentPasaje + 1);
     });
 }
 
@@ -2397,16 +2392,10 @@ function seekToPasaje(index) {
 
 function setupScorePageNav() {
     document.getElementById('scorePrevBtn')?.addEventListener('click', () => {
-        if (currentPasaje > 0) {
-            loadPasaje(currentPasaje - 1);
-            seekToPasaje(currentPasaje);
-        }
+        if (currentPasaje > 0) loadPasaje(currentPasaje - 1);
     });
     document.getElementById('scoreNextBtn')?.addEventListener('click', () => {
-        if (currentPasaje < PASAJES.length - 1) {
-            loadPasaje(currentPasaje + 1);
-            seekToPasaje(currentPasaje);
-        }
+        if (currentPasaje < PASAJES.length - 1) loadPasaje(currentPasaje + 1);
     });
 }
 
