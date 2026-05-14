@@ -1876,6 +1876,84 @@ body {
     background: var(--accent-hover);
 }
 
+/* ── Audio player bar ───────────────────────────────────────── */
+.audio-player-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius);
+    padding: 0.55rem 0.8rem;
+}
+
+.audio-play-btn {
+    width: 2rem;
+    height: 2rem;
+    border-radius: 50%;
+    background: var(--accent);
+    border: none;
+    color: #fff;
+    font-size: 0.75rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: background 0.15s;
+}
+.audio-play-btn:hover { background: var(--accent-hover); }
+
+.audio-time {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    font-variant-numeric: tabular-nums;
+    flex-shrink: 0;
+    min-width: 2.8rem;
+    text-align: center;
+}
+
+.audio-seek-wrap {
+    flex: 1;
+    height: 4px;
+    background: var(--bg-tertiary);
+    border-radius: 2px;
+    cursor: pointer;
+    position: relative;
+}
+.audio-seek-fill {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 2px;
+    width: 0%;
+    pointer-events: none;
+    transition: width 0.1s linear;
+}
+
+.source-selector {
+    display: flex;
+    gap: 0.25rem;
+    flex-shrink: 0;
+}
+.src-btn {
+    padding: 0.2rem 0.55rem;
+    font-size: 0.72rem;
+    font-weight: 600;
+    font-family: 'Inter', sans-serif;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    background: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.15s;
+}
+.src-btn:hover { color: var(--text-primary); border-color: var(--accent); }
+.src-btn.active {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+}
+
 /* ── Mix de guitarras L/R ───────────────────────────────────── */
 .mix-panel {
     background: var(--bg-secondary);

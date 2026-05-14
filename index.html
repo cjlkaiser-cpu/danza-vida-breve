@@ -109,18 +109,28 @@
 
                 <!-- Reference Recording -->
                 <div class="reference-section">
-                    <h3>Grabación de referencia <span class="ref-performer">— Dúo (YouTube)</span></h3>
-                    <div class="local-video-container" id="localVideoWrap">
-                        <video id="refVideo" controls preload="metadata" playsinline webkit-playsinline x5-playsinline>
-                            <source src="media/danza-vida-breve-1080p.mp4" type="video/mp4">
-                        </video>
+                    <h3>Grabación de referencia</h3>
+
+                    <!-- Audio element oculto — toda la lógica JS existente lo usa por id="refVideo" -->
+                    <audio id="refVideo" preload="metadata">
+                        <source src="media/danza-vida-breve-1080p.mp4" type="video/mp4">
+                    </audio>
+
+                    <!-- Barra de reproductor compacta -->
+                    <div class="audio-player-bar">
+                        <button class="audio-play-btn" id="audioPlayBtn" title="Reproducir / Pausar">▶</button>
+                        <span class="audio-time" id="audioTime">0:00</span>
+                        <div class="audio-seek-wrap" id="audioSeekWrap">
+                            <div class="audio-seek-fill" id="audioSeekFill"></div>
+                        </div>
+                        <span class="audio-time" id="audioDuration">—:——</span>
+                        <div class="source-selector">
+                            <button class="src-btn active" data-src="both">Ambas</button>
+                            <button class="src-btn" data-src="guitar1">G. I</button>
+                            <button class="src-btn" data-src="guitar2">G. II</button>
+                        </div>
                     </div>
-                    <div class="yt-container" id="ytFallback" style="display:none">
-                        <iframe src="https://www.youtube.com/embed/UMPNIYaI224"
-                            title="Danza Espagnole · De Falla / Pujol" frameborder="0"
-                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                            allowfullscreen></iframe>
-                    </div>
+
                     <div class="ab-timeline" id="abTimeline">
                         <div class="ab-region" id="abRegion"></div>
                         <div class="ab-cursor" id="abCursor"></div>
@@ -134,24 +144,6 @@
                         <div class="time-set-controls">
                             <button class="time-set-btn" id="setTimeBtn" title="Fijar como inicio de sección">⏱ Fijar inicio</button>
                             <span class="time-set-hint" id="timeSetHint"></span>
-                        </div>
-                    </div>
-
-                    <!-- Panel mix L/R -->
-                    <div class="mix-panel" id="mixPanel">
-                        <div class="mix-header">
-                            <span class="mix-title">Mix de guitarras</span>
-                            <button class="mix-swap-btn" id="mixSwapBtn" title="Intercambiar canales L↔R">⇄ Intercambiar</button>
-                        </div>
-                        <div class="mix-row">
-                            <span class="mix-label">Guitarra I <span class="mix-ch">(L)</span></span>
-                            <input type="range" id="mixL" min="0" max="150" value="100" class="mix-slider">
-                            <span class="mix-val" id="mixLVal">100%</span>
-                        </div>
-                        <div class="mix-row">
-                            <span class="mix-label">Guitarra II <span class="mix-ch">(R)</span></span>
-                            <input type="range" id="mixR" min="0" max="150" value="100" class="mix-slider">
-                            <span class="mix-val" id="mixRVal">100%</span>
                         </div>
                     </div>
 

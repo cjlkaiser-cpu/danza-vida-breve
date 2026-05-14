@@ -877,8 +877,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         setupFullscreenAnnotation();
         setupMetroMoreBtn();
         setupTempoSaveBtn();
+        setupAudioPlayer();
         setupRefVideoControls();
-        setupMixPanel();
         setupTools();
         updateProgress();
 
@@ -1667,9 +1667,6 @@ let audioCtx = null;
 let analyserNode = null;
 let videoSourceNode = null;
 let prevFreqData = null;
-let gainL = null;
-let gainR = null;
-let mixSwapped = false;
 
 function formatTime(s) {
     const m = Math.floor(s / 60).toString().padStart(2, '0');
@@ -1761,30 +1758,15 @@ function handleTap() {
 
 function connectAudioCtx() {
     if (audioCtx) return;
-    const video = document.getElementById('refVideo');
-    if (!video) return;
+    const audio = document.getElementById('refVideo');
+    if (!audio) return;
     audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    videoSourceNode = audioCtx.createMediaElementSource(video);
-
-    // L/R splitter → individual gain nodes → merger → analyser → output
-    const splitter = audioCtx.createChannelSplitter(2);
-    const merger   = audioCtx.createChannelMerger(2);
-    gainL = audioCtx.createGain();
-    gainR = audioCtx.createGain();
-
-    videoSourceNode.connect(splitter);
-    splitter.connect(gainL, 0);   // L → gainL
-    splitter.connect(gainR, 1);   // R → gainR
-    gainL.connect(merger, 0, 0);  // gainL → merger L
-    gainR.connect(merger, 0, 1);  // gainR → merger R
-
+    videoSourceNode = audioCtx.createMediaElementSource(audio);
     analyserNode = audioCtx.createAnalyser();
     analyserNode.fftSize = 512;
-    merger.connect(analyserNode);
+    videoSourceNode.connect(analyserNode);
     analyserNode.connect(audioCtx.destination);
     prevFreqData = new Uint8Array(analyserNode.frequencyBinCount);
-
-    // Resume inmediato — algunos navegadores crean el contexto suspendido
     audioCtx.resume().catch(() => {});
 }
 
@@ -1873,13 +1855,6 @@ function setupRefVideoControls() {
     const timeline = document.getElementById('abTimeline');
     if (!video || !timeline) return;
 
-    // Fallback a YouTube si el archivo local no está disponible
-    video.addEventListener('error', () => {
-        document.getElementById('localVideoWrap').style.display = 'none';
-        document.getElementById('ytFallback').style.display = 'block';
-        document.querySelector('.speed-panel').style.display = 'none';
-        document.getElementById('abTimeline').style.display = 'none';
-    }, { once: true });
 
     video.addEventListener('loadedmetadata', () => {
         if (pointB === null) pointB = video.duration;
@@ -2147,58 +2122,89 @@ function stopMirror() {
 // ==========================================
 
 // ==========================================
-// MIX L/R (GUITARRA I / II)
+// AUDIO PLAYER + SELECTOR DE FUENTE
 // ==========================================
 
-function setupMixPanel() {
-    const sliderI = document.getElementById('mixL');
-    const sliderII = document.getElementById('mixR');
-    const valI    = document.getElementById('mixLVal');
-    const valII   = document.getElementById('mixRVal');
-    const swapBtn = document.getElementById('mixSwapBtn');
-    if (!sliderI || !sliderII) return;
+const SOURCES = {
+    both:    'media/danza-vida-breve-1080p.mp4',
+    guitar1: 'media/guitar1.mp3',
+    guitar2: 'media/guitar2.mp3'
+};
+let currentSource = 'both';
 
-    function ensureCtx() {
-        if (!audioCtx) connectAudioCtx();
+function setupAudioPlayer() {
+    const audio      = document.getElementById('refVideo');
+    const playBtn    = document.getElementById('audioPlayBtn');
+    const timeEl     = document.getElementById('audioTime');
+    const durEl      = document.getElementById('audioDuration');
+    const seekWrap   = document.getElementById('audioSeekWrap');
+    const seekFill   = document.getElementById('audioSeekFill');
+    if (!audio || !playBtn) return;
+
+    function fmt(s) {
+        const m = Math.floor(s / 60);
+        const sec = String(Math.floor(s % 60)).padStart(2, '0');
+        return `${m}:${sec}`;
+    }
+
+    audio.addEventListener('loadedmetadata', () => {
+        durEl.textContent = fmt(audio.duration);
+    });
+
+    audio.addEventListener('timeupdate', () => {
+        if (!audio.duration) return;
+        const pct = (audio.currentTime / audio.duration) * 100;
+        seekFill.style.width = pct + '%';
+        timeEl.textContent = fmt(audio.currentTime);
+    });
+
+    audio.addEventListener('play',  () => { playBtn.textContent = '⏸'; });
+    audio.addEventListener('pause', () => { playBtn.textContent = '▶'; });
+    audio.addEventListener('ended', () => { playBtn.textContent = '▶'; });
+
+    playBtn.addEventListener('click', () => {
         if (audioCtx?.state === 'suspended') audioCtx.resume().catch(() => {});
-    }
+        audio.paused ? audio.play() : audio.pause();
+    });
 
-    // Guitarra I slider controla canal L (o R si swap), y viceversa
-    function applyGains() {
-        if (!gainL || !gainR) return;
-        const vI  = parseInt(sliderI.value)  / 100;
-        const vII = parseInt(sliderII.value) / 100;
-        const t   = audioCtx.currentTime;
-        if (mixSwapped) {
-            gainL.gain.setTargetAtTime(vII, t, 0.02);
-            gainR.gain.setTargetAtTime(vI,  t, 0.02);
-        } else {
-            gainL.gain.setTargetAtTime(vI,  t, 0.02);
-            gainR.gain.setTargetAtTime(vII, t, 0.02);
-        }
-    }
+    // Seek al hacer clic en la barra de progreso
+    seekWrap.addEventListener('pointerdown', e => {
+        const r = seekWrap.getBoundingClientRect();
+        audio.currentTime = ((e.clientX - r.left) / r.width) * (audio.duration || 0);
+    });
 
-    function updateVals() {
-        valI.textContent  = sliderI.value  + '%';
-        valII.textContent = sliderII.value + '%';
-    }
+    // Selector de fuente
+    document.querySelectorAll('.src-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const src = btn.dataset.src;
+            if (src === currentSource) return;
+            currentSource = src;
+            document.querySelectorAll('.src-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
 
-    function updateChLabels() {
-        const rowI  = sliderI.closest('.mix-row').querySelector('.mix-label');
-        const rowII = sliderII.closest('.mix-row').querySelector('.mix-label');
-        rowI.innerHTML  = `Guitarra I <span class="mix-ch">${mixSwapped ? '(R)' : '(L)'}</span>`;
-        rowII.innerHTML = `Guitarra II <span class="mix-ch">${mixSwapped ? '(L)' : '(R)'}</span>`;
-    }
+            const wasPlaying = !audio.paused;
+            const pos = audio.currentTime;
 
-    sliderI.addEventListener('input',  () => { ensureCtx(); updateVals(); applyGains(); });
-    sliderII.addEventListener('input', () => { ensureCtx(); updateVals(); applyGains(); });
+            // Si el AudioContext existe, desconectar antes de cambiar src
+            if (audioCtx && videoSourceNode) {
+                videoSourceNode.disconnect();
+                audioCtx.close();
+                audioCtx = null;
+                videoSourceNode = null;
+                analyserNode = null;
+            }
 
-    swapBtn.addEventListener('click', () => {
-        mixSwapped = !mixSwapped;
-        updateChLabels();
-        ensureCtx();
-        applyGains();
-        showNotification(mixSwapped ? 'Canales intercambiados ⇄' : 'Canales restaurados', 'info');
+            audio.src = SOURCES[src];
+            audio.load();
+            audio.addEventListener('canplay', () => {
+                audio.currentTime = pos;
+                if (wasPlaying) audio.play();
+                durEl.textContent = fmt(audio.duration);
+            }, { once: true });
+
+            const labels = { both: 'Ambas guitarras', guitar1: 'Guitarra I sola', guitar2: 'Guitarra II sola' };
+            showNotification(labels[src], 'success');
+        });
     });
 }
 
