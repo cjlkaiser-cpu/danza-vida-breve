@@ -878,6 +878,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         setupMetroMoreBtn();
         setupTempoSaveBtn();
         setupAudioPlayer();
+        setupWaveformCanvas();
         setupRefVideoControls();
         setupTools();
         updateProgress();
@@ -2180,6 +2181,7 @@ function setupAudioPlayer() {
             currentSource = src;
             document.querySelectorAll('.src-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
+            window._redrawWaveform?.();
 
             const wasPlaying = !audio.paused;
             const pos = audio.currentTime;
@@ -2205,6 +2207,48 @@ function setupAudioPlayer() {
             showNotification(labels[src], 'success');
         });
     });
+}
+
+// ==========================================
+// WAVEFORM CANVAS
+// ==========================================
+
+function setupWaveformCanvas() {
+    const canvas = document.getElementById('waveformCanvas');
+    if (!canvas || typeof WAVEFORMS === 'undefined') return;
+    const ctx = canvas.getContext('2d');
+
+    function draw() {
+        const data = WAVEFORMS[currentSource] || WAVEFORMS.both;
+        const W = canvas.clientWidth;
+        const H = canvas.clientHeight;
+        if (!W || !H) return;
+
+        const dpr = window.devicePixelRatio || 1;
+        canvas.width  = W * dpr;
+        canvas.height = H * dpr;
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        ctx.clearRect(0, 0, W, H);
+
+        const n    = data.length;
+        const barW = W / n;
+        const midY = H / 2;
+
+        ctx.fillStyle = currentSource === 'guitar1' ? '#d97706'
+                      : currentSource === 'guitar2' ? '#22c55e'
+                      : '#64748b';
+        ctx.globalAlpha = 0.6;
+
+        for (let i = 0; i < n; i++) {
+            const h = Math.max(data[i] * midY * 1.85, 1);
+            ctx.fillRect(i * barW, midY - h, Math.max(barW - 0.5, 0.5), h * 2);
+        }
+        ctx.globalAlpha = 1;
+    }
+
+    draw();
+    window._redrawWaveform = draw;
+    new ResizeObserver(draw).observe(canvas.parentElement);
 }
 
 function setupTools() {
