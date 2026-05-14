@@ -1778,7 +1778,11 @@ function detectBPM() {
         return;
     }
     try { connectAudioCtx(); } catch (e) {
-        showNotification('Error al acceder al audio', 'error');
+        showNotification('Detector BPM requiere servidor local (puerto 8504)', 'error');
+        return;
+    }
+    if (!analyserNode) {
+        showNotification('Detector BPM requiere servidor local (puerto 8504)', 'error');
         return;
     }
     if (!analyserNode) return;
@@ -1861,11 +1865,6 @@ function setupRefVideoControls() {
         updateABTimeline();
     });
 
-    // Inicializar AudioContext en el primer play (gesto de usuario garantizado)
-    video.addEventListener('play', () => {
-        connectAudioCtx();
-        if (audioCtx?.state === 'suspended') audioCtx.resume().catch(() => {});
-    }, { once: true });
 
     video.addEventListener('timeupdate', () => {
         if (!video.duration) return;
