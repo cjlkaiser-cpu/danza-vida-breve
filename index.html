@@ -137,6 +137,24 @@
                         </div>
                     </div>
 
+                    <!-- Panel mix L/R -->
+                    <div class="mix-panel" id="mixPanel">
+                        <div class="mix-header">
+                            <span class="mix-title">Mix de guitarras</span>
+                            <button class="mix-swap-btn" id="mixSwapBtn" title="Intercambiar canales L↔R">⇄ Intercambiar</button>
+                        </div>
+                        <div class="mix-row">
+                            <span class="mix-label">Guitarra I <span class="mix-ch">(L)</span></span>
+                            <input type="range" id="mixL" min="0" max="150" value="100" class="mix-slider">
+                            <span class="mix-val" id="mixLVal">100%</span>
+                        </div>
+                        <div class="mix-row">
+                            <span class="mix-label">Guitarra II <span class="mix-ch">(R)</span></span>
+                            <input type="range" id="mixR" min="0" max="150" value="100" class="mix-slider">
+                            <span class="mix-val" id="mixRVal">100%</span>
+                        </div>
+                    </div>
+
                     <!-- Panel de velocidad / BPM -->
                     <div class="speed-panel">
                         <div class="speed-header">

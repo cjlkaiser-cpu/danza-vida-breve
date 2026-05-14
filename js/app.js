@@ -878,6 +878,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         setupMetroMoreBtn();
         setupTempoSaveBtn();
         setupRefVideoControls();
+        setupMixPanel();
         setupTools();
         updateProgress();
 
@@ -1666,6 +1667,9 @@ let audioCtx = null;
 let analyserNode = null;
 let videoSourceNode = null;
 let prevFreqData = null;
+let gainL = null;
+let gainR = null;
+let mixSwapped = false;
 
 function formatTime(s) {
     const m = Math.floor(s / 60).toString().padStart(2, '0');
@@ -1761,9 +1765,22 @@ function connectAudioCtx() {
     if (!video) return;
     audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     videoSourceNode = audioCtx.createMediaElementSource(video);
+
+    // L/R splitter → individual gain nodes → merger → analyser → output
+    const splitter = audioCtx.createChannelSplitter(2);
+    const merger   = audioCtx.createChannelMerger(2);
+    gainL = audioCtx.createGain();
+    gainR = audioCtx.createGain();
+
+    videoSourceNode.connect(splitter);
+    splitter.connect(gainL, 0);   // L → gainL
+    splitter.connect(gainR, 1);   // R → gainR
+    gainL.connect(merger, 0, 0);  // gainL → merger L
+    gainR.connect(merger, 0, 1);  // gainR → merger R
+
     analyserNode = audioCtx.createAnalyser();
     analyserNode.fftSize = 512;
-    videoSourceNode.connect(analyserNode);
+    merger.connect(analyserNode);
     analyserNode.connect(audioCtx.destination);
     prevFreqData = new Uint8Array(analyserNode.frequencyBinCount);
 }
@@ -2119,6 +2136,61 @@ function stopMirror() {
 // ==========================================
 // SETUP HERRAMIENTAS
 // ==========================================
+
+// ==========================================
+// MIX L/R (GUITARRA I / II)
+// ==========================================
+
+function setupMixPanel() {
+    const sliderI = document.getElementById('mixL');
+    const sliderII = document.getElementById('mixR');
+    const valI    = document.getElementById('mixLVal');
+    const valII   = document.getElementById('mixRVal');
+    const swapBtn = document.getElementById('mixSwapBtn');
+    if (!sliderI || !sliderII) return;
+
+    function ensureCtx() {
+        if (!audioCtx) connectAudioCtx();
+    }
+
+    // Guitarra I slider controla canal L (o R si swap), y viceversa
+    function applyGains() {
+        if (!gainL || !gainR) return;
+        const vI  = parseInt(sliderI.value)  / 100;
+        const vII = parseInt(sliderII.value) / 100;
+        const t   = audioCtx.currentTime;
+        if (mixSwapped) {
+            gainL.gain.setTargetAtTime(vII, t, 0.02);
+            gainR.gain.setTargetAtTime(vI,  t, 0.02);
+        } else {
+            gainL.gain.setTargetAtTime(vI,  t, 0.02);
+            gainR.gain.setTargetAtTime(vII, t, 0.02);
+        }
+    }
+
+    function updateVals() {
+        valI.textContent  = sliderI.value  + '%';
+        valII.textContent = sliderII.value + '%';
+    }
+
+    function updateChLabels() {
+        const rowI  = sliderI.closest('.mix-row').querySelector('.mix-label');
+        const rowII = sliderII.closest('.mix-row').querySelector('.mix-label');
+        rowI.innerHTML  = `Guitarra I <span class="mix-ch">${mixSwapped ? '(R)' : '(L)'}</span>`;
+        rowII.innerHTML = `Guitarra II <span class="mix-ch">${mixSwapped ? '(L)' : '(R)'}</span>`;
+    }
+
+    sliderI.addEventListener('input',  () => { ensureCtx(); updateVals(); applyGains(); });
+    sliderII.addEventListener('input', () => { ensureCtx(); updateVals(); applyGains(); });
+
+    swapBtn.addEventListener('click', () => {
+        mixSwapped = !mixSwapped;
+        updateChLabels();
+        ensureCtx();
+        applyGains();
+        showNotification(mixSwapped ? 'Canales intercambiados ⇄' : 'Canales restaurados', 'info');
+    });
+}
 
 function setupTools() {
     const tunerBtn = document.getElementById('tunerToggle');
