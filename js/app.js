@@ -2372,6 +2372,17 @@ function setupDuoMode() {
         const val = document.getElementById('duoOffsetVal');
         val.textContent = ms === 0 ? '0 ms' : (ms > 0 ? `+${ms} ms` : `${ms} ms`);
     });
+
+    // Tempo buttons
+    document.querySelectorAll('.duo-tempo-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const rate = parseFloat(btn.dataset.rate);
+            document.getElementById('duoVideoA').playbackRate = rate;
+            document.getElementById('duoVideoB').playbackRate = rate;
+            document.querySelectorAll('.duo-tempo-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+        });
+    });
 }
 
 // ==========================================

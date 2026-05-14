@@ -10,7 +10,7 @@
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎸</text></svg>">
     <meta name="theme-color" content="#0f172a">
     <title>Danza Espagnole · De Falla / Pujol — Plan de Estudio</title>
-    <link rel="stylesheet" href="css/styles.css?v=12">
+    <link rel="stylesheet" href="css/styles.css?v=13">
 </head>
 <body>
     <div class="app-container">
@@ -334,6 +334,17 @@
                         <div class="recordings-list" id="recordingsList"></div>
                         <div class="recordings-list" id="videosList"></div>
 
+                        <!-- Explicación dúo -->
+                        <details class="duo-info">
+                            <summary>ℹ️ ¿Cómo funciona el dúo asíncrono?</summary>
+                            <ol class="duo-info-steps">
+                                <li><strong>Persona A</strong> selecciona <em>G. I</em> (o G. II), escribe el rango de compases, graba su parte y descarga el vídeo con ⬇. Lo manda por WhatsApp o email.</li>
+                                <li><strong>Persona B</strong> carga ese fichero con el botón de abajo → aparece en el slot izquierdo del split screen.</li>
+                                <li>B graba su parte en el mismo rango de compases. En la lista de vídeos pulsa <strong>▷</strong> para cargarlo en el slot derecho.</li>
+                                <li>Pulsa <strong>Reproducir juntos</strong>. Si hay desfase, ajusta el slider <em>Compañero ±</em>. Cambia el tempo para estudiar despacio.</li>
+                            </ol>
+                        </details>
+
                         <!-- Cargar vídeo del compañero -->
                         <div class="duo-partner-area" id="duoPartnerArea">
                             <input type="file" id="duoPartnerInput" accept="video/*" hidden>
@@ -359,6 +370,12 @@
                             </div>
                             <div class="duo-sync-bar">
                                 <button class="duo-play-btn" id="duoPlayBtn">▶ Reproducir juntos</button>
+                                <div class="duo-tempo-wrap">
+                                    <span class="duo-offset-label">Tempo</span>
+                                    <button class="duo-tempo-btn" data-rate="0.5">50%</button>
+                                    <button class="duo-tempo-btn" data-rate="0.75">75%</button>
+                                    <button class="duo-tempo-btn active" data-rate="1">100%</button>
+                                </div>
                                 <div class="duo-offset-wrap">
                                     <span class="duo-offset-label">Compañero ±</span>
                                     <input type="range" id="duoOffsetSlider" min="-3000" max="3000" step="50" value="0">
@@ -423,6 +440,6 @@
 </div>
     <script src="js/data.js?v=7"></script>
     <script src="js/waveforms.js?v=1"></script>
-    <script src="js/app.js?v=19"></script>
+    <script src="js/app.js?v=20"></script>
 </body>
 </html>

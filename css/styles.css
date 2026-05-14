@@ -2158,6 +2158,71 @@ body {
     color: var(--text-muted);
 }
 
+/* Duo info / explanation */
+.duo-info {
+    margin-top: 0.6rem;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius);
+    background: var(--bg-primary);
+    overflow: hidden;
+}
+
+.duo-info summary {
+    padding: 0.45rem 0.75rem;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    cursor: pointer;
+    user-select: none;
+    list-style: none;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    transition: color 0.15s;
+}
+.duo-info summary::-webkit-details-marker { display: none; }
+.duo-info summary:hover { color: var(--text-secondary); }
+.duo-info[open] summary { color: var(--text-secondary); border-bottom: 1px solid var(--border-color); }
+
+.duo-info-steps {
+    padding: 0.75rem 1rem 0.75rem 1.75rem;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.duo-info-steps li {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    line-height: 1.6;
+}
+
+.duo-info-steps li strong { color: var(--text-secondary); }
+.duo-info-steps li em { color: var(--accent-light); font-style: normal; }
+
+/* Tempo buttons in sync bar */
+.duo-tempo-wrap {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    flex-shrink: 0;
+}
+
+.duo-tempo-btn {
+    padding: 0.2rem 0.5rem;
+    font-size: 0.72rem;
+    font-weight: 600;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    background: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: 'Inter', sans-serif;
+}
+.duo-tempo-btn:hover { color: var(--text-primary); border-color: var(--accent); }
+.duo-tempo-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+
 /* Partner load button */
 .duo-partner-area {
     margin-top: 1rem;
