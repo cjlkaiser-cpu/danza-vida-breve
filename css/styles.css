@@ -1912,6 +1912,12 @@ body {
 .page-nav-btn:hover:not(:disabled) { border-color: var(--accent); color: var(--accent-light); }
 .page-nav-btn:disabled { opacity: 0.35; cursor: default; }
 
+.page-auto-btn.active {
+    background: var(--accent-green);
+    border-color: var(--accent-green);
+    color: #fff;
+}
+
 .page-nav-info {
     font-size: 0.78rem;
     color: var(--text-muted);

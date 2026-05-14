@@ -898,6 +898,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         setupTempoSaveBtn();
         setupAudioPlayer();
         setupDuoMode();
+        setupAutoFollow();
         setupScorePageNav();
         setupWaveformCanvas();
         setupRefVideoControls();
@@ -2388,6 +2389,31 @@ function seekToPasaje(index) {
     const audio = document.getElementById('refVideo');
     const t = PASAJES[index]?.startTime;
     if (audio && t !== undefined) audio.currentTime = t;
+}
+
+function setupAutoFollow() {
+    const btn   = document.getElementById('autoFollowBtn');
+    const audio = document.getElementById('refVideo');
+    if (!btn || !audio) return;
+
+    let autoFollow = false;
+
+    btn.addEventListener('click', () => {
+        autoFollow = !autoFollow;
+        btn.classList.toggle('active', autoFollow);
+        btn.textContent = autoFollow ? '⏱ Auto ON' : '⏱ Auto';
+    });
+
+    audio.addEventListener('timeupdate', () => {
+        if (!autoFollow) return;
+        const t = audio.currentTime;
+        let idx = 0;
+        for (let i = 0; i < PASAJES.length; i++) {
+            if (PASAJES[i].startTime <= t) idx = i;
+            else break;
+        }
+        if (idx !== currentPasaje) loadPasaje(idx);
+    });
 }
 
 function setupScorePageNav() {
