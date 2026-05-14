@@ -2435,12 +2435,21 @@ function updateMarkHint(index) {
     const hint = document.getElementById('pageMarkHint');
     if (!hint) return;
     const overrides = loadPageTimes();
-    const t = overrides[index] !== undefined ? overrides[index] : PASAJES[index].startTime;
+    const isCustom  = overrides[index] !== undefined;
+    const t    = isCustom ? overrides[index] : PASAJES[index].startTime;
     const orig = PASAJES[index].startTime;
-    const isCustom = overrides[index] !== undefined;
-    hint.textContent = isCustom
-        ? `Pág ${index + 1} · inicio: ${t.toFixed(1)}s (original: ${orig}s)`
-        : `Pág ${index + 1} · inicio: ${t}s`;
+    if (isCustom) {
+        hint.innerHTML = `Pág ${index + 1} · inicio: ${t.toFixed(1)}s (original: ${orig}s) <button class="mark-reset-btn" id="markResetBtn">✕ Borrar</button>`;
+        document.getElementById('markResetBtn').addEventListener('click', () => {
+            const times = loadPageTimes();
+            delete times[index];
+            localStorage.setItem(LS_TIMES_KEY, JSON.stringify(times));
+            updateMarkHint(index);
+            showNotification(`Pág ${index + 1} restaurada a ${orig}s`, 'info');
+        });
+    } else {
+        hint.textContent = `Pág ${index + 1} · inicio: ${t}s`;
+    }
 }
 
 function setupMarkTime() {
