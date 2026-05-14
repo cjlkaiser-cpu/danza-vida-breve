@@ -1783,6 +1783,9 @@ function connectAudioCtx() {
     merger.connect(analyserNode);
     analyserNode.connect(audioCtx.destination);
     prevFreqData = new Uint8Array(analyserNode.frequencyBinCount);
+
+    // Resume inmediato — algunos navegadores crean el contexto suspendido
+    audioCtx.resume().catch(() => {});
 }
 
 function detectBPM() {
@@ -1882,6 +1885,12 @@ function setupRefVideoControls() {
         if (pointB === null) pointB = video.duration;
         updateABTimeline();
     });
+
+    // Inicializar AudioContext en el primer play (gesto de usuario garantizado)
+    video.addEventListener('play', () => {
+        connectAudioCtx();
+        if (audioCtx?.state === 'suspended') audioCtx.resume().catch(() => {});
+    }, { once: true });
 
     video.addEventListener('timeupdate', () => {
         if (!video.duration) return;
@@ -2151,6 +2160,7 @@ function setupMixPanel() {
 
     function ensureCtx() {
         if (!audioCtx) connectAudioCtx();
+        if (audioCtx?.state === 'suspended') audioCtx.resume().catch(() => {});
     }
 
     // Guitarra I slider controla canal L (o R si swap), y viceversa
