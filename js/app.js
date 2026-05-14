@@ -878,6 +878,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         setupMetroMoreBtn();
         setupTempoSaveBtn();
         setupAudioPlayer();
+        setupScorePageNav();
         setupWaveformCanvas();
         setupRefVideoControls();
         setupTools();
@@ -989,6 +990,13 @@ async function loadPasaje(index) {
 
     elements.prevBtn.disabled = index === 0;
     elements.nextBtn.disabled = index === PASAJES.length - 1;
+
+    const pageInfo = document.getElementById('pageNavInfo');
+    const scorePrev = document.getElementById('scorePrevBtn');
+    const scoreNext = document.getElementById('scoreNextBtn');
+    if (pageInfo) pageInfo.textContent = `${index + 1} / ${PASAJES.length}`;
+    if (scorePrev) scorePrev.disabled = index === 0;
+    if (scoreNext) scoreNext.disabled = index === PASAJES.length - 1;
 
     expandSection(pasaje.seccion);
 
@@ -1117,9 +1125,14 @@ function setupEventListeners() {
     elements.mobileMenuBtn.addEventListener('click', toggleMobileMenu);
 
     document.addEventListener('keydown', (e) => {
-        if (e.target.tagName === 'TEXTAREA') return;
-        if (e.key === 'ArrowLeft' && currentPasaje > 0) loadPasaje(currentPasaje - 1);
-        else if (e.key === 'ArrowRight' && currentPasaje < PASAJES.length - 1) loadPasaje(currentPasaje + 1);
+        if (e.target.tagName === 'TEXTAREA' || e.target.tagName === 'INPUT') return;
+        if (e.key === 'ArrowLeft' && currentPasaje > 0) {
+            loadPasaje(currentPasaje - 1);
+            seekToPasaje(currentPasaje);
+        } else if (e.key === 'ArrowRight' && currentPasaje < PASAJES.length - 1) {
+            loadPasaje(currentPasaje + 1);
+            seekToPasaje(currentPasaje);
+        }
     });
 }
 
@@ -2206,6 +2219,31 @@ function setupAudioPlayer() {
             const labels = { both: 'Ambas guitarras', guitar1: 'Guitarra I sola', guitar2: 'Guitarra II sola' };
             showNotification(labels[src], 'success');
         });
+    });
+}
+
+// ==========================================
+// SCORE PAGE NAVIGATION
+// ==========================================
+
+function seekToPasaje(index) {
+    const audio = document.getElementById('refVideo');
+    const t = PASAJES[index]?.startTime;
+    if (audio && t !== undefined) audio.currentTime = t;
+}
+
+function setupScorePageNav() {
+    document.getElementById('scorePrevBtn')?.addEventListener('click', () => {
+        if (currentPasaje > 0) {
+            loadPasaje(currentPasaje - 1);
+            seekToPasaje(currentPasaje);
+        }
+    });
+    document.getElementById('scoreNextBtn')?.addEventListener('click', () => {
+        if (currentPasaje < PASAJES.length - 1) {
+            loadPasaje(currentPasaje + 1);
+            seekToPasaje(currentPasaje);
+        }
     });
 }
 

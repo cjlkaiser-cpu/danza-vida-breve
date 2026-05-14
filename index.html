@@ -10,7 +10,7 @@
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎸</text></svg>">
     <meta name="theme-color" content="#0f172a">
     <title>Danza Espagnole · De Falla / Pujol — Plan de Estudio</title>
-    <link rel="stylesheet" href="css/styles.css?v=10">
+    <link rel="stylesheet" href="css/styles.css?v=11">
 </head>
 <body>
     <div class="app-container">
@@ -197,6 +197,11 @@
                             <canvas id="annotationCanvas" class="annotation-canvas"></canvas>
                         </div>
                     </div>
+                    <div class="score-page-nav">
+                        <button class="page-nav-btn" id="scorePrevBtn" title="Página anterior (←)" disabled>◀ Anterior</button>
+                        <span class="page-nav-info" id="pageNavInfo">1 / 14</span>
+                        <button class="page-nav-btn" id="scoreNextBtn" title="Página siguiente (→)">Siguiente ▶</button>
+                    </div>
                 </div>
 
                 <!-- Fullscreen overlay -->
@@ -373,6 +378,6 @@
 </div>
     <script src="js/data.js?v=7"></script>
     <script src="js/waveforms.js?v=1"></script>
-    <script src="js/app.js?v=17"></script>
+    <script src="js/app.js?v=18"></script>
 </body>
 </html>
