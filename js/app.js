@@ -1149,6 +1149,11 @@ function setupEventListeners() {
 
     document.addEventListener('keydown', (e) => {
         if (e.target.tagName === 'TEXTAREA' || e.target.tagName === 'INPUT') return;
+        if (e.code === 'Space') {
+            e.preventDefault();
+            document.getElementById('audioPlayBtn')?.click();
+            return;
+        }
         if (e.key === 'ArrowLeft' && currentPasaje > 0) loadPasaje(currentPasaje - 1);
         else if (e.key === 'ArrowRight' && currentPasaje < PASAJES.length - 1) loadPasaje(currentPasaje + 1);
     });
