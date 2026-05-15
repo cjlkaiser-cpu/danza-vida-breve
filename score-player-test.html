@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Partitura · Test Player · Danza Espagnole</title>
+<script src="js/annotations-data.js"></script>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: #0f172a;
+  color: #e2e8f0;
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  user-select: none;
+}
+
+/* ── TOPBAR ── */
+#topbar {
+  background: #1e293b;
+  border-bottom: 1px solid #334155;
+  padding: 8px 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+
+#topbar h1 {
+  font-size: 13px;
+  font-weight: 600;
+  color: #94a3b8;
+  white-space: nowrap;
+}
+
+.btn {
+  background: #334155;
+  color: #e2e8f0;
+  border: none;
+  border-radius: 6px;
+  padding: 5px 11px;
+  cursor: pointer;
+  font-size: 13px;
+  line-height: 1;
+  transition: background 0.12s;
+  white-space: nowrap;
+}
+.btn:hover { background: #475569; }
+.btn:disabled { opacity: 0.4; cursor: default; }
+
+#play-btn { font-size: 17px; width: 36px; height: 30px; padding: 0; }
+
+.speed-group { display: flex; gap: 3px; }
+.speed-btn { padding: 4px 8px; font-size: 11px; font-weight: 600; }
+.speed-btn.on { background: #0284c7; color: #fff; }
+
+#page-info { color: #64748b; font-size: 12px; min-width: 64px; font-variant-numeric: tabular-nums; }
+#time-info { color: #64748b; font-size: 12px; font-family: monospace; min-width: 72px; }
+
+#mode-btn { border: 1.5px solid #64748b; }
+#mode-btn.annotate { border-color: #f87171; color: #fca5a5; }
+
+#annot-count { font-size: 11px; color: #64748b; }
+
+/* ── SEEKBAR ── */
+#seekbar-wrap {
+  padding: 5px 14px 6px;
+  background: #1e293b;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+#seekbar {
+  width: 100%;
+  height: 5px;
+  background: #334155;
+  border-radius: 3px;
+  position: relative;
+}
+#seekfill {
+  height: 100%;
+  background: #0284c7;
+  border-radius: 3px;
+  pointer-events: none;
+  width: 0%;
+}
+#seekt {
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 11px; height: 11px;
+  background: #fff;
+  border-radius: 50%;
+  pointer-events: none;
+  left: 0%;
+}
+/* Page markers on seekbar */
+.pg-marker {
+  position: absolute;
+  top: 0; bottom: 0;
+  width: 1px;
+  background: rgba(148, 163, 184, 0.4);
+  pointer-events: none;
+}
+
+/* ── SCORE AREA ── */
+#score-area {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: #0f172a;
+}
+
+#score-wrapper {
+  position: relative;
+  display: inline-block;
+  line-height: 0;
+}
+
+#score-img {
+  display: block;
+  max-height: calc(100vh - 90px);
+  max-width: 100%;
+  object-fit: contain;
+}
+#score-img.crosshair { cursor: crosshair; }
+
+/* Measure highlight */
+#mhl {
+  position: absolute;
+  border: 2px solid #fbbf24;
+  background: rgba(251, 191, 36, 0.13);
+  border-radius: 2px;
+  pointer-events: none;
+  display: none;
+  transition: left 0.05s linear, top 0.05s linear, width 0.05s linear;
+}
+
+/* Annotation dot */
+.adot {
+  position: absolute;
+  width: 8px; height: 8px;
+  background: #f87171;
+  border: 1.5px solid #fca5a5;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+/* Loading overlay */
+#loading {
+  position: absolute;
+  text-align: center;
+  color: #64748b;
+}
+#loading p { margin-bottom: 10px; font-size: 14px; }
+#loadbar { width: 200px; height: 4px; background: #334155; border-radius: 2px; margin: 0 auto; }
+#loadfill { height: 100%; background: #0284c7; border-radius: 2px; width: 0%; transition: width 0.2s; }
+
+/* ── ANNOT PANEL ── */
+#apanel {
+  position: fixed;
+  bottom: 12px; right: 14px;
+  background: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 8px;
+  padding: 10px 12px;
+  width: 270px;
+  max-height: 180px;
+  overflow-y: auto;
+  font-family: monospace;
+  font-size: 11px;
+  display: none;
+  z-index: 10;
+}
+#apanel h4 { font-size: 10px; color: #94a3b8; margin-bottom: 6px; text-transform: uppercase; letter-spacing: .05em; }
+.arow { color: #64748b; line-height: 1.7; display: flex; justify-content: space-between; }
+.arow:last-child { color: #fbbf24; }
+.adel { cursor: pointer; color: #ef4444; margin-left: 8px; }
+.adel:hover { color: #f87171; }
+</style>
+</head>
+<body>
+
+<div id="topbar">
+  <h1>🎸 Danza Espagnole</h1>
+
+  <button class="btn" id="prev-btn" title="Página anterior (←)">◀</button>
+  <button class="btn" id="play-btn" title="Play/Pause (Espacio)">▶</button>
+  <button class="btn" id="next-btn" title="Página siguiente (→)">▶▶</button>
+
+  <div class="speed-group">
+    <button class="btn speed-btn" data-s="0.5">½×</button>
+    <button class="btn speed-btn" data-s="0.75">¾×</button>
+    <button class="btn speed-btn on" data-s="1">1×</button>
+    <button class="btn speed-btn" data-s="1.25">1¼×</button>
+    <button class="btn speed-btn" data-s="1.5">1½×</button>
+  </div>
+
+  <span id="page-info">Pág. 1/14</span>
+  <span id="time-info">0:00 / 0:00</span>
+
+  <button class="btn" id="mode-btn" title="Alternar modo anotar/reproducir (A)">⊕ Anotar compases</button>
+  <span id="annot-count">0 anotaciones</span>
+
+  <button class="btn" id="export-btn" title="Exportar anotaciones como JSON" style="margin-left:auto">↓ Exportar</button>
+  <button class="btn" id="import-btn" title="Importar anotaciones JSON">↑ Importar</button>
+  <input type="file" id="import-input" accept=".json" hidden>
+  <button class="btn" id="clear-page-btn" title="Limpiar anotaciones de esta página">✕ Página</button>
+</div>
+
+<div id="seekbar-wrap">
+  <div id="seekbar">
+    <div id="seekfill"></div>
+    <div id="seekt"></div>
+  </div>
+</div>
+
+<div id="score-area">
+  <div id="loading">
+    <p>Cargando audio…</p>
+    <div id="loadbar"><div id="loadfill"></div></div>
+  </div>
+  <div id="score-wrapper" style="display:none">
+    <img id="score-img" src="" alt="Partitura" draggable="false">
+    <div id="mhl"></div>
+  </div>
+</div>
+
+<div id="apanel">
+  <h4>Anotaciones · pág. <span id="apanel-page">1</span></h4>
+  <div id="alist"></div>
+</div>
+
+<script>
+// ─── DATA ─────────────────────────────────────────────────────────────────────
+const PAGES = [
+  { n: 1,  img: 'img/danza_page-01.png', t: 0   },
+  { n: 2,  img: 'img/danza_page-02.png', t: 18  },
+  { n: 3,  img: 'img/danza_page-03.png', t: 37  },
+  { n: 4,  img: 'img/danza_page-04.png', t: 56  },
+  { n: 5,  img: 'img/danza_page-05.png', t: 74  },
+  { n: 6,  img: 'img/danza_page-06.png', t: 90  },
+  { n: 7,  img: 'img/danza_page-07.png', t: 108 },
+  { n: 8,  img: 'img/danza_page-08.png', t: 126 },
+  { n: 9,  img: 'img/danza_page-09.png', t: 144 },
+  { n: 10, img: 'img/danza_page-10.png', t: 162 },
+  { n: 11, img: 'img/danza_page-11.png', t: 178 },
+  { n: 12, img: 'img/danza_page-12.png', t: 196 },
+  { n: 13, img: 'img/danza_page-13.png', t: 214 },
+  { n: 14, img: 'img/danza_page-14.png', t: 230 },
+];
+
+// Each annotation: { page, time, x, y }  (x,y are 0-1 fractions of image)
+let annotations = [];
+let annotateMode = false;
+
+// ─── AUDIO ENGINE ─────────────────────────────────────────────────────────────
+const a1 = new Audio('media/guitar1.mp3');
+const a2 = new Audio('media/guitar2.mp3');
+a1.preload = a2.preload = 'auto';
+
+let speed = 1.0;
+let playing = false;
+let duration = 0;
+let ready = 0;
+
+function fmtTime(s) {
+  const m = Math.floor(s / 60);
+  return `${m}:${String(Math.floor(s % 60)).padStart(2,'0')}`;
+}
+
+function onReady() {
+  ready++;
+  document.getElementById('loadfill').style.width = (ready * 50) + '%';
+  if (ready < 2) return;
+  duration = a1.duration;
+  document.getElementById('loading').style.display = 'none';
+  document.getElementById('score-wrapper').style.display = '';
+  addPageMarkers();
+  showPage(0);
+}
+a1.addEventListener('canplaythrough', onReady, { once: true });
+a2.addEventListener('canplaythrough', onReady, { once: true });
+
+a1.addEventListener('error', e => {
+  document.getElementById('loading').innerHTML =
+    `<p style="color:#ef4444">Error cargando audio: ${a1.error?.message || 'fichero no encontrado'}</p>`;
+});
+
+function playFrom(offset) {
+  a1.pause();
+  a2.pause();
+  const t = Math.max(0, Math.min(offset, duration - 0.1));
+  a1.currentTime = t;
+  a2.currentTime = t;
+  a1.playbackRate = a2.playbackRate = speed;
+  a1.play();
+  a2.play();
+  playing = true;
+  updatePlayBtn();
+}
+
+a1.addEventListener('ended', () => { playing = false; updatePlayBtn(); });
+
+function pause() {
+  a1.pause(); a2.pause();
+  playing = false;
+  updatePlayBtn();
+}
+
+function now() { return a1.currentTime; }
+
+function togglePlay() {
+  if (!duration) return;
+  playing ? pause() : playFrom(now());
+}
+
+function updatePlayBtn() {
+  document.getElementById('play-btn').textContent = playing ? '⏸' : '▶';
+}
+
+// ─── PAGES ────────────────────────────────────────────────────────────────────
+let curPage = 0;
+
+function showPage(idx) {
+  curPage = Math.max(0, Math.min(idx, PAGES.length - 1));
+  const pg = PAGES[curPage];
+  document.getElementById('score-img').src = pg.img;
+  document.getElementById('page-info').textContent = `Pág. ${pg.n}/${PAGES.length}`;
+  document.getElementById('apanel-page').textContent = pg.n;
+  hideHL();
+  renderDots();
+  renderAnnotPanel();
+}
+
+// Usa el tiempo real de la primera anotación de cada página cuando existe
+function pageStartTime(pageN) {
+  const pa = annotations.filter(a => a.page === pageN);
+  if (pa.length) return Math.min(...pa.map(a => a.time));
+  return PAGES.find(p => p.n === pageN)?.t ?? 0;
+}
+
+function pageForTime(t) {
+  let idx = 0;
+  for (let i = 0; i < PAGES.length; i++) {
+    if (pageStartTime(PAGES[i].n) <= t) idx = i;
+  }
+  return idx;
+}
+
+function seekToPage(idx) {
+  const t = PAGES[idx].t;
+  if (playing) playFrom(t);
+  else { a1.currentTime = a2.currentTime = t; }
+  showPage(idx);
+}
+
+// ─── SEEKBAR PAGE MARKERS ─────────────────────────────────────────────────────
+function addPageMarkers() {
+  const sb = document.getElementById('seekbar');
+  PAGES.forEach((pg, i) => {
+    if (i === 0) return;
+    const marker = document.createElement('div');
+    marker.className = 'pg-marker';
+    marker.style.left = (pg.t / duration * 100) + '%';
+    marker.title = `Pág. ${pg.n}`;
+    sb.appendChild(marker);
+  });
+}
+
+// ─── HIGHLIGHT ────────────────────────────────────────────────────────────────
+const hl = document.getElementById('mhl');
+
+function hideHL() { hl.style.display = 'none'; }
+
+function showHL(x, y, w, h) {
+  const img = document.getElementById('score-img');
+  const ir = img.getBoundingClientRect();
+  const wr = document.getElementById('score-wrapper').getBoundingClientRect();
+  const ox = ir.left - wr.left;
+  const oy = ir.top - wr.top;
+
+  hl.style.display = 'block';
+  hl.style.left   = (ox + x * ir.width)  + 'px';
+  hl.style.top    = (oy + y * ir.height) + 'px';
+  hl.style.width  = (w * ir.width)       + 'px';
+  hl.style.height = (h * ir.height)      + 'px';
+}
+
+// Click lands roughly at the top of the staff → extend 13% downward
+const HL_H   = 0.13;
+const HL_TOP = 0.01;
+
+function updateHL(t) {
+  const pageN = PAGES[curPage].n;
+  const pa = annotations
+    .filter(a => a.page === pageN)
+    .sort((a, b) => a.time - b.time);
+  if (!pa.length) { hideHL(); return; }
+
+  let active = null;
+  for (const a of pa) { if (a.time <= t) active = a; }
+  if (!active) { hideHL(); return; }
+
+  const idx = pa.indexOf(active);
+  const next = pa[idx + 1];
+
+  let w;
+  if (next && Math.abs(next.y - active.y) < 0.07) {
+    w = next.x - active.x;
+  } else {
+    w = 0.95 - active.x;
+  }
+  w = Math.max(w, 0.04);
+
+  showHL(active.x, active.y - HL_TOP, w, HL_H);
+}
+
+// ─── ANIMATION LOOP ───────────────────────────────────────────────────────────
+function tick() {
+  requestAnimationFrame(tick);
+  if (!duration) return;
+
+  const t = now();
+  const pct = Math.min(t / duration * 100, 100);
+  document.getElementById('seekfill').style.width = pct + '%';
+  document.getElementById('seekt').style.left = pct + '%';
+  document.getElementById('time-info').textContent = `${fmtTime(t)} / ${fmtTime(duration)}`;
+
+  if (playing) {
+    if (!annotateMode) {
+      const pi = pageForTime(t);
+      if (pi !== curPage) showPage(pi);
+    }
+    updateHL(t);
+  } else if (now() > 0) {
+    updateHL(now());
+  }
+}
+
+// ─── ANNOTATION LOGIC ─────────────────────────────────────────────────────────
+function toggleAnnotate() {
+  annotateMode = !annotateMode;
+  const btn = document.getElementById('mode-btn');
+  const img = document.getElementById('score-img');
+  if (annotateMode) {
+    btn.textContent = '✕ Salir modo anotar';
+    btn.classList.add('annotate');
+    img.classList.add('crosshair');
+    document.getElementById('apanel').style.display = 'block';
+  } else {
+    btn.textContent = '⊕ Anotar compases';
+    btn.classList.remove('annotate');
+    img.classList.remove('crosshair');
+    document.getElementById('apanel').style.display = 'none';
+  }
+}
+
+document.getElementById('score-img').addEventListener('click', e => {
+  const img = e.currentTarget;
+  const r = img.getBoundingClientRect();
+  const x = (e.clientX - r.left) / r.width;
+  const y = (e.clientY - r.top)  / r.height;
+
+  // Playback mode: click near a measure → jump to it
+  if (!annotateMode) {
+    const pageN = PAGES[curPage].n;
+    const pa = annotations.filter(a => a.page === pageN);
+    if (!pa.length) return;
+    // Find closest annotation (weighted: x matters more than y)
+    let best = null, bestDist = Infinity;
+    for (const a of pa) {
+      const d = Math.hypot((a.x - x) * 1.5, a.y - y);
+      if (d < bestDist) { bestDist = d; best = a; }
+    }
+    if (best && bestDist < 0.25) {
+      if (playing) playFrom(best.time);
+      else { a1.currentTime = a2.currentTime = best.time; updateHL(best.time); }
+    }
+    return;
+  }
+
+  const t = now();
+  annotations.push({ page: PAGES[curPage].n, time: t, x, y });
+  annotations.sort((a, b) => a.time - b.time);
+  renderDots();
+  renderAnnotPanel();
+  updateAnnotCount();
+});
+
+function renderDots() {
+  document.querySelectorAll('.adot').forEach(d => d.remove());
+  if (!annotateMode) return;
+
+  const img = document.getElementById('score-img');
+  const ir = img.getBoundingClientRect();
+  const wr = document.getElementById('score-wrapper').getBoundingClientRect();
+  const ox = ir.left - wr.left;
+  const oy = ir.top - wr.top;
+  const wrapper = document.getElementById('score-wrapper');
+
+  annotations
+    .filter(a => a.page === PAGES[curPage].n)
+    .forEach(a => {
+      const d = document.createElement('div');
+      d.className = 'adot';
+      d.style.left = (ox + a.x * ir.width)  + 'px';
+      d.style.top  = (oy + a.y * ir.height) + 'px';
+      d.title = fmtTime(a.time);
+      wrapper.appendChild(d);
+    });
+}
+
+function renderAnnotPanel() {
+  const pageN = PAGES[curPage].n;
+  const pa = annotations
+    .filter(a => a.page === pageN)
+    .sort((a, b) => a.time - b.time);
+
+  document.getElementById('alist').innerHTML = pa.map((a, i) => `
+    <div class="arow">
+      <span>#${i+1} &nbsp; ${fmtTime(a.time)} &nbsp; x=${(a.x*100).toFixed(1)}% y=${(a.y*100).toFixed(1)}%</span>
+      <span class="adel" data-t="${a.time}" data-p="${a.page}" title="Eliminar">✕</span>
+    </div>`
+  ).join('');
+
+  document.querySelectorAll('.adel').forEach(el => {
+    el.addEventListener('click', () => {
+      const t = parseFloat(el.dataset.t);
+      const p = parseInt(el.dataset.p);
+      annotations = annotations.filter(a => !(a.page === p && Math.abs(a.time - t) < 0.001));
+      renderDots();
+      renderAnnotPanel();
+      updateAnnotCount();
+    });
+  });
+}
+
+function updateAnnotCount() {
+  document.getElementById('annot-count').textContent = `${annotations.length} anotaciones`;
+}
+
+// ─── EXPORT / IMPORT ──────────────────────────────────────────────────────────
+document.getElementById('export-btn').addEventListener('click', () => {
+  const blob = new Blob(
+    [JSON.stringify({ pages: PAGES, annotations }, null, 2)],
+    { type: 'application/json' }
+  );
+  Object.assign(document.createElement('a'), {
+    href: URL.createObjectURL(blob),
+    download: 'danza_annotations.json'
+  }).click();
+});
+
+document.getElementById('import-btn').addEventListener('click', () =>
+  document.getElementById('import-input').click());
+
+document.getElementById('import-input').addEventListener('change', e => {
+  const f = e.target.files[0];
+  if (!f) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      const data = JSON.parse(ev.target.result);
+      annotations = data.annotations || [];
+      renderDots();
+      renderAnnotPanel();
+      updateAnnotCount();
+    } catch(err) { alert('JSON inválido'); }
+  };
+  reader.readAsText(f);
+  e.target.value = '';
+});
+
+document.getElementById('clear-page-btn').addEventListener('click', () => {
+  const p = PAGES[curPage].n;
+  if (!confirm(`¿Eliminar todas las anotaciones de la pág. ${p}?`)) return;
+  annotations = annotations.filter(a => a.page !== p);
+  renderDots();
+  renderAnnotPanel();
+  updateAnnotCount();
+});
+
+// ─── SEEKBAR ──────────────────────────────────────────────────────────────────
+let seeking = false;
+let seekWasPlaying = false;
+
+function seekTo(e) {
+  if (!duration) return;
+  const r = document.getElementById('seekbar').getBoundingClientRect();
+  const pct = Math.max(0, Math.min(1, (e.clientX - r.left) / r.width));
+  const t = pct * duration;
+  a1.currentTime = a2.currentTime = t;
+  updateHL(t);
+  showPage(pageForTime(t));
+}
+
+document.getElementById('seekbar-wrap').addEventListener('mousedown', e => {
+  if (!duration) return;
+  seekWasPlaying = playing;
+  if (playing) { a1.pause(); a2.pause(); playing = false; updatePlayBtn(); }
+  seeking = true;
+  seekTo(e);
+});
+document.addEventListener('mousemove', e => { if (seeking) seekTo(e); });
+document.addEventListener('mouseup', () => {
+  if (seeking && seekWasPlaying) playFrom(now());
+  seeking = false;
+});
+
+// ─── SPEED BUTTONS ────────────────────────────────────────────────────────────
+document.querySelectorAll('.speed-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    speed = parseFloat(btn.dataset.s);
+    document.querySelectorAll('.speed-btn').forEach(b => b.classList.remove('on'));
+    btn.classList.add('on');
+    a1.playbackRate = a2.playbackRate = speed;
+    if (playing) { const t = now(); playFrom(t); }
+  });
+});
+
+// ─── NAV BUTTONS ─────────────────────────────────────────────────────────────
+document.getElementById('prev-btn').addEventListener('click', () => seekToPage(curPage - 1));
+document.getElementById('next-btn').addEventListener('click', () => seekToPage(curPage + 1));
+document.getElementById('play-btn').addEventListener('click', togglePlay);
+document.getElementById('mode-btn').addEventListener('click', toggleAnnotate);
+
+// ─── KEYBOARD ─────────────────────────────────────────────────────────────────
+document.addEventListener('keydown', e => {
+  if (e.target.tagName === 'INPUT') return;
+  if (e.code === 'Space')      { e.preventDefault(); togglePlay(); }
+  if (e.code === 'ArrowRight') { e.preventDefault(); showPage(curPage + 1); }
+  if (e.code === 'ArrowLeft')  { e.preventDefault(); showPage(curPage - 1); }
+  if (e.key  === 'a' || e.key === 'A') toggleAnnotate();
+});
+
+// Re-render dots on resize (positions depend on rendered image size)
+window.addEventListener('resize', () => { renderDots(); hideHL(); });
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+if (typeof ANNOTATIONS_DATA !== 'undefined') {
+  annotations = ANNOTATIONS_DATA;
+  updateAnnotCount();
+}
+
+tick();
+</script>
+</body>
+</html>

@@ -16,29 +16,29 @@ La grabación de referencia incluye las dos guitarras separadas mediante **ICA**
 
 ## Características
 
-### Partitura y navegación
-- 14 secciones (páginas de partitura) con título, indicaciones técnicas y análisis interpretativo
-- Botones ◀ / ▶ bajo la partitura para pasar página sin interrumpir el audio
-- Flechas del teclado ← → para navegar entre secciones
-- **Auto-follow** (⏱ Auto): la partitura pasa de página automáticamente sincronizada con la grabación
-- **Calibración de tiempos** (⏺ Marcar): escucha y marca el segundo exacto en que debe cambiar cada página; se guarda en el navegador y se puede borrar con ✕
+### Partitura sincronizada (Score Player)
+- La partitura está dividida en 14 páginas con **235 compases anotados** con su tiempo exacto en la grabación
+- Un rectángulo amarillo sigue el compás activo en tiempo real mientras suena el audio
+- **Click / tap en un compás** → el audio salta a ese punto y comienza a reproducir
+- Las páginas cambian automáticamente mientras se reproduce
+- **Loop A-B por compás**: pulsa ⟳ Loop, haz click en el compás inicial (marcador verde) y luego en el final (azul) → la grabación repite ese fragmento en bucle. ✕ Borrar para cancelar
+- Seekbar propia en la sección de partitura para navegar por la grabación
 
 ### Grabación de referencia
 - Reproductor de audio compacto con barra de progreso y seek
 - Selector de fuente: **Ambas** · **G. I** · **G. II** (pistas separadas por ICA)
 - **Waveform** de la forma de onda sobre el timeline A/B para ajustar puntos de loop con precisión
-- Bucle A/B con handles arrastrables y botones de marcado
+- Bucle A/B con handles arrastrables y botones de marcado manual
 - Control de velocidad de reproducción (50 % – 130 %) conservando el tono
+
+### Teclado (escritorio)
+- **Espacio** — reproducir / pausar
+- **← →** — navegar entre secciones
 
 ### Metrónomo
 - Metrónomo integrado con slider y presets: 60 · 72 · **96 ♩** · 108 · 120 BPM
 - Tap tempo y detección automática de BPM (requiere servidor local)
 - Historial de sesiones de tempo por sección
-
-### Anotaciones en partitura
-- Lápiz y goma sobre la imagen de partitura (rojo, azul, verde, naranja)
-- Vista a pantalla completa para anotar en tablet
-- Las anotaciones se guardan por sección en IndexedDB
 
 ### Grabaciones propias
 - Grabación de audio y vídeo con la webcam
@@ -63,7 +63,7 @@ Herramienta para practicar el dúo a distancia, sin servidor:
 
 ## Uso sin servidor
 
-La mayoría de funciones funcionan abriendo `index.html` directamente en el navegador (`file://`). Solo el detector automático de BPM requiere servir los archivos por HTTP.
+Todas las funciones principales funcionan abriendo `index.html` directamente en el navegador (`file://`). Solo el detector automático de BPM requiere servir los archivos por HTTP.
 
 Para lanzar un servidor local rápido:
 
@@ -75,22 +75,48 @@ python3 -m http.server 8504
 
 ---
 
+## Herramienta de anotación de compases
+
+`score-player-test.html` es una herramienta standalone para re-anotar o afinar los tiempos de los compases en la partitura. Útil si se quiere corregir el timing del rectángulo de seguimiento.
+
+Para usarla localmente:
+
+```bash
+# En la carpeta del proyecto:
+./score-player.command      # lanza servidor en puerto 7777 y abre el navegador
+# — o manualmente —
+python3 -m http.server 7777
+# Abrir http://localhost:7777/score-player-test.html
+```
+
+Flujo de trabajo:
+1. Carga la grabación (ambas guitarras o por separado)
+2. En modo **Anotar**, haz click en cada compás en el momento exacto en que suena
+3. **Exportar JSON** genera el fichero con todos los puntos
+4. Sustituye el contenido de `js/annotations-data.js` con los nuevos datos
+
+---
+
 ## Estructura
 
 ```
 ├── index.html
+├── score-player-test.html   # Herramienta de anotación de compases
+├── score-player.command     # Lanzador local para la herramienta de anotación
 ├── css/
 │   └── styles.css
 ├── js/
-│   ├── data.js          # 14 secciones con startTime, imagen y análisis
-│   ├── app.js           # Toda la lógica de la app
-│   └── waveforms.js     # Peaks pre-computados (1200 pts × 3 fuentes)
+│   ├── data.js              # 14 secciones con startTime, imagen y análisis
+│   ├── annotations-data.js  # 235 compases anotados: {page, time, x, y}
+│   ├── score-player.js      # Score player: RAF tick, highlight, loop A-B
+│   ├── app.js               # Lógica principal de la app
+│   └── waveforms.js         # Peaks pre-computados (1200 pts × 3 fuentes)
 ├── media/
 │   ├── danza-vida-breve-1080p.mp4   # Ambas guitarras (246 s)
 │   ├── guitar1.mp3                  # Guitarra I aislada (ICA)
 │   └── guitar2.mp3                  # Guitarra II aislada (ICA)
 └── img/
-    ├── danza_page-01.png … danza_page-14.png
+    └── danza_page-01.png … danza_page-14.png
 ```
 
 ---
