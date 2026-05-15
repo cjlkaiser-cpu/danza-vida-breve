@@ -183,12 +183,9 @@
       showNotification(`Loop cc.${aI + 1} – cc.${bI + 1}`, 'success');
 
     } else {
-      // Modo normal: saltar al compás
+      // Modo normal: saltar al compás y reproducir
       seekRefVideo(best.time);
-      // No cambiar página manualmente — el tick lo hace si está sonando
-      // Si está parado, mostramos la página correcta
-      const aud = audio();
-      if (aud?.paused) showPage(pageForTime(best.time));
+      audio()?.play().catch(() => {});
     }
   }
 
@@ -287,13 +284,8 @@
 
     showPage(0);
 
-    // Click en partitura — touch usa pointerup para distinguir tap/scroll
-    img.addEventListener('pointerdown', e => {
-      if (e.pointerType !== 'touch') processClick(e);
-    });
-    img.addEventListener('pointerup', e => {
-      if (e.pointerType === 'touch') processClick(e);
-    });
+    // Click en partitura — 'click' dispara en ratón y en tap táctil (no en scroll)
+    img.addEventListener('click', processClick);
 
     // Navegación de página
     $('spPrevPage').addEventListener('click', () => showPage(curPage - 1));
@@ -318,11 +310,20 @@
       doSeek(e);
     });
     seekWrap.addEventListener('pointermove', e => { if (seekDragging) doSeek(e); });
-    seekWrap.addEventListener('pointerup', () => {
+    const endSeek = () => {
       if (seekDragging) {
         seekDragging = false;
         if (seekWasPlay) audio()?.play();
       }
+    };
+    seekWrap.addEventListener('pointerup',     endSeek);
+    seekWrap.addEventListener('pointercancel', endSeek);
+
+    // Sincronizar página en cualquier seek (sidebar, handles A-B, sp-seekbar)
+    audio().addEventListener('seeked', () => {
+      const t = audio().currentTime;
+      showPage(pageForTime(t));
+      updateHL(t);
     });
 
     // Resize: reposicionar overlays
