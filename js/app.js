@@ -2176,7 +2176,8 @@ function getDuoName() {
 const SOURCES = {
     both:    'media/danza-vida-breve-1080p.mp4',
     guitar1: 'media/guitar1.mp3',
-    guitar2: 'media/guitar2.mp3'
+    guitar2: 'media/guitar2.mp3',
+    yt:      'media/danza-yt-PMywMM8Nf8s.mp4'
 };
 let currentSource = 'both';
 
@@ -2251,7 +2252,13 @@ function setupAudioPlayer() {
                 durEl.textContent = fmt(audio.duration);
             }, { once: true });
 
-            const labels = { both: 'Ambas guitarras', guitar1: 'Guitarra I sola', guitar2: 'Guitarra II sola' };
+            // Mostrar el elemento de video solo cuando la fuente es YT
+            audio.style.display = (src === 'yt') ? 'block' : 'none';
+
+            const labels = {
+                both: 'Ambas guitarras', guitar1: 'Guitarra I sola',
+                guitar2: 'Guitarra II sola', yt: 'Vídeo YouTube'
+            };
             showNotification(labels[src], 'success');
         });
     });

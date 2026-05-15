@@ -111,10 +111,11 @@
                 <div class="reference-section">
                     <h3>Grabación de referencia</h3>
 
-                    <!-- Audio element oculto — toda la lógica JS existente lo usa por id="refVideo" -->
-                    <audio id="refVideo" preload="metadata">
+                    <!-- Elemento de media — oculto por defecto, visible solo en fuente "yt" -->
+                    <video id="refVideo" preload="metadata" playsinline
+                        style="display:none;width:100%;max-height:300px;border-radius:8px;margin-bottom:8px;background:#000;object-fit:contain">
                         <source src="media/danza-vida-breve-1080p.mp4" type="video/mp4">
-                    </audio>
+                    </video>
 
                     <!-- Barra de reproductor compacta -->
                     <div class="audio-player-bar">
@@ -128,6 +129,7 @@
                             <button class="src-btn active" data-src="both">Ambas</button>
                             <button class="src-btn" data-src="guitar1">G. I</button>
                             <button class="src-btn" data-src="guitar2">G. II</button>
+                            <button class="src-btn" data-src="yt">Vídeo YT</button>
                         </div>
                     </div>
 
