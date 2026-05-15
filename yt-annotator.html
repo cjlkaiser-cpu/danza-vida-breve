@@ -1,0 +1,782 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>YT Annotator · Danza Espagnole</title>
+<script src="js/annotations-data.js"></script>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: #0f172a;
+  color: #e2e8f0;
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  user-select: none;
+}
+
+/* ── TOPBAR ── */
+#topbar {
+  background: #1e293b;
+  border-bottom: 1px solid #334155;
+  padding: 7px 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+#topbar h1 { font-size: 12px; font-weight: 600; color: #94a3b8; white-space: nowrap; }
+
+.btn {
+  background: #334155;
+  color: #e2e8f0;
+  border: none;
+  border-radius: 6px;
+  padding: 5px 10px;
+  cursor: pointer;
+  font-size: 12px;
+  white-space: nowrap;
+  transition: background 0.12s;
+}
+.btn:hover { background: #475569; }
+.btn:disabled { opacity: 0.4; cursor: default; }
+.btn.active { background: #0284c7; color: #fff; }
+.btn.danger { background: #7f1d1d; color: #fca5a5; }
+.btn.success { background: #14532d; color: #86efac; }
+
+#play-btn { font-size: 16px; width: 34px; height: 28px; padding: 0; }
+
+.speed-group { display: flex; gap: 2px; }
+.speed-btn { padding: 4px 7px; font-size: 11px; font-weight: 600; }
+.speed-btn.on { background: #0284c7; color: #fff; }
+
+#progress-info {
+  font-size: 12px;
+  font-family: monospace;
+  color: #fbbf24;
+  font-weight: 600;
+  min-width: 64px;
+}
+#page-info { color: #64748b; font-size: 11px; min-width: 56px; }
+#time-info  { color: #64748b; font-size: 11px; font-family: monospace; min-width: 72px; }
+
+/* ── MAIN AREA ── */
+#main {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+  min-height: 0;
+}
+
+/* ── LEFT PANEL (video) ── */
+#left-panel {
+  width: 38%;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid #1e293b;
+  background: #090e18;
+  overflow: hidden;
+}
+
+#video-wrap {
+  position: relative;
+  background: #000;
+  flex-shrink: 0;
+}
+#yt-video {
+  width: 100%;
+  display: block;
+  max-height: 55vh;
+  object-fit: contain;
+}
+
+/* Seekbar */
+#seekbar-wrap {
+  padding: 6px 12px 5px;
+  background: #1e293b;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+#seekbar {
+  width: 100%;
+  height: 5px;
+  background: #334155;
+  border-radius: 3px;
+  position: relative;
+}
+#seekfill { height: 100%; background: #0284c7; border-radius: 3px; pointer-events: none; width: 0%; }
+#seekt {
+  position: absolute; top: 50%;
+  transform: translate(-50%, -50%);
+  width: 11px; height: 11px;
+  background: #fff; border-radius: 50%;
+  pointer-events: none; left: 0%;
+}
+.pg-marker {
+  position: absolute; top: 0; bottom: 0;
+  width: 1px; background: rgba(148,163,184,0.35);
+  pointer-events: none;
+}
+
+/* Tap panel */
+#tap-panel {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+#tap-status {
+  background: #1e293b;
+  border-radius: 8px;
+  padding: 12px;
+  text-align: center;
+}
+#tap-cc {
+  font-size: 28px;
+  font-weight: 700;
+  color: #fbbf24;
+  font-family: monospace;
+}
+#tap-label {
+  font-size: 11px;
+  color: #64748b;
+  margin-top: 2px;
+}
+#tap-time-current {
+  font-size: 11px;
+  color: #94a3b8;
+  font-family: monospace;
+  margin-top: 4px;
+}
+
+#tap-controls {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+#tap-btn  { flex: 1; font-size: 14px; font-weight: 700; padding: 10px; }
+#undo-btn { flex: 0 0 auto; }
+#skip-btn { flex: 0 0 auto; font-size: 11px; }
+
+#tap-instructions {
+  font-size: 11px;
+  color: #475569;
+  line-height: 1.6;
+  background: #0f172a;
+  border-radius: 6px;
+  padding: 8px 10px;
+}
+#tap-instructions kbd {
+  background: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 3px;
+  padding: 1px 5px;
+  font-family: monospace;
+  font-size: 10px;
+  color: #94a3b8;
+}
+
+#annot-list {
+  flex: 1;
+  overflow-y: auto;
+  font-family: monospace;
+  font-size: 10px;
+  color: #475569;
+  line-height: 1.8;
+}
+.arow-done { color: #4ade80; }
+.arow-current { color: #fbbf24; font-weight: 700; }
+.arow-future { color: #1e293b; }
+
+/* ── RIGHT PANEL (score) ── */
+#right-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: #0f172a;
+}
+
+#score-nav {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  background: #0f172a;
+  border-bottom: 1px solid #1e293b;
+  flex-shrink: 0;
+}
+
+#score-area {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  position: relative;
+}
+
+#score-wrapper {
+  position: relative;
+  display: inline-block;
+  line-height: 0;
+}
+
+#score-img {
+  display: block;
+  max-height: calc(100vh - 110px);
+  max-width: 100%;
+  object-fit: contain;
+  cursor: crosshair;
+}
+
+/* highlight actual */
+#mhl {
+  position: absolute;
+  border: 2.5px solid #fbbf24;
+  background: rgba(251,191,36,0.15);
+  border-radius: 2px;
+  pointer-events: none;
+  display: none;
+  z-index: 3;
+}
+/* target (próximo a anotar) */
+#tgt {
+  position: absolute;
+  border: 2.5px solid #22c55e;
+  background: rgba(34,197,94,0.18);
+  border-radius: 2px;
+  pointer-events: none;
+  display: none;
+  z-index: 4;
+  transition: left 0.08s, top 0.08s;
+}
+/* dots de anotaciones completadas */
+.adot {
+  position: absolute;
+  width: 7px; height: 7px;
+  background: #22c55e;
+  border: 1px solid #4ade80;
+  border-radius: 50%;
+  transform: translate(-50%,-50%);
+  pointer-events: none;
+  z-index: 2;
+  opacity: 0.7;
+}
+
+/* export panel */
+#export-panel {
+  position: fixed; bottom: 12px; right: 14px;
+  background: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 8px;
+  padding: 12px;
+  width: 320px;
+  max-height: 200px;
+  display: none;
+  z-index: 20;
+}
+#export-panel h4 { font-size: 10px; color: #94a3b8; margin-bottom: 8px; text-transform: uppercase; letter-spacing: .05em; }
+#export-textarea {
+  width: 100%;
+  height: 120px;
+  background: #0f172a;
+  border: 1px solid #334155;
+  border-radius: 4px;
+  color: #86efac;
+  font-family: monospace;
+  font-size: 10px;
+  padding: 6px;
+  resize: none;
+}
+</style>
+</head>
+<body>
+
+<div id="topbar">
+  <h1>YT Annotator · Danza Espagnole</h1>
+
+  <button class="btn" id="play-btn">▶</button>
+
+  <div class="speed-group">
+    <button class="btn speed-btn" data-s="0.5">½×</button>
+    <button class="btn speed-btn" data-s="0.75">¾×</button>
+    <button class="btn speed-btn on" data-s="1">1×</button>
+    <button class="btn speed-btn" data-s="1.25">1¼×</button>
+  </div>
+
+  <span id="time-info">0:00 / 0:00</span>
+  <span id="page-info">Pág. 1/14</span>
+  <span id="progress-info">0 / 235</span>
+
+  <button class="btn" id="prev-btn">◀ Pág</button>
+  <button class="btn" id="next-btn">Pág ▶</button>
+
+  <button class="btn" id="export-btn" style="margin-left:auto">↓ Exportar JS</button>
+  <button class="btn" id="import-btn">↑ Importar JSON</button>
+  <input type="file" id="import-input" accept=".json" hidden>
+  <button class="btn danger" id="reset-btn">↺ Reset tiempos</button>
+</div>
+
+<div id="main">
+
+  <!-- ── LEFT: vídeo + tap ── -->
+  <div id="left-panel">
+    <div id="video-wrap">
+      <video id="yt-video" src="media/danza-yt-PMywMM8Nf8s.mp4" playsinline preload="metadata"></video>
+    </div>
+
+    <div id="seekbar-wrap">
+      <div id="seekbar">
+        <div id="seekfill"></div>
+        <div id="seekt"></div>
+      </div>
+    </div>
+
+    <div id="tap-panel">
+      <div id="tap-status">
+        <div id="tap-cc">cc. —</div>
+        <div id="tap-label">Siguiente compás a anotar</div>
+        <div id="tap-time-current">Tiempo vídeo: 0:00.000</div>
+      </div>
+
+      <div id="tap-controls">
+        <button class="btn success" id="tap-btn">⏎ TAP</button>
+        <button class="btn" id="undo-btn">↩ Deshacer</button>
+        <button class="btn" id="skip-btn">→ Saltar</button>
+      </div>
+
+      <div id="tap-instructions">
+        <kbd>Space</kbd> play/pause &nbsp;·&nbsp; <kbd>Enter</kbd> tap compás<br>
+        <kbd>Backspace</kbd> deshacer último tap<br>
+        <kbd>Tab</kbd> saltar compás &nbsp;·&nbsp; <kbd>←</kbd><kbd>→</kbd> cambiar página<br>
+        <b>Click en partitura</b> → corrección manual del compás más cercano.
+      </div>
+
+      <div id="annot-list"></div>
+    </div>
+  </div>
+
+  <!-- ── RIGHT: partitura ── -->
+  <div id="right-panel">
+    <div id="score-nav">
+      <span style="font-size:11px;color:#64748b;">Vista previa highlight:</span>
+      <button class="btn" id="nav-prev">◀</button>
+      <button class="btn" id="nav-next">▶</button>
+    </div>
+    <div id="score-area">
+      <div id="score-wrapper" style="display:none">
+        <img id="score-img" src="" alt="Partitura" draggable="false">
+        <div id="mhl"></div>
+        <div id="tgt"></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- export panel -->
+<div id="export-panel">
+  <h4>Copiar → pegar en js/annotations-yt.js</h4>
+  <textarea id="export-textarea" readonly></textarea>
+  <div style="display:flex;gap:6px;margin-top:8px">
+    <button class="btn" id="copy-btn" style="flex:1">Copiar</button>
+    <button class="btn" id="close-export-btn">✕</button>
+  </div>
+</div>
+
+<script>
+// ─── CONSTANTES ────────────────────────────────────────────────────────────────
+const PAGES = [
+  { n:1,  t:0   }, { n:2,  t:12  }, { n:3,  t:28  }, { n:4,  t:44  },
+  { n:5,  t:58  }, { n:6,  t:74  }, { n:7,  t:90  }, { n:8,  t:108 },
+  { n:9,  t:122 }, { n:10, t:140 }, { n:11, t:156 }, { n:12, t:172 },
+  { n:13, t:188 }, { n:14, t:210 },
+];
+
+const HL_H   = 0.13;
+const HL_TOP = 0.01;
+const Y_THR  = 0.07;
+
+// ─── ESTADO ────────────────────────────────────────────────────────────────────
+// Copia de ANNOTATIONS_DATA con flag 'done'
+let annotations = (typeof ANNOTATIONS_DATA !== 'undefined')
+  ? ANNOTATIONS_DATA.map(a => ({ ...a, done: false }))
+  : [];
+
+let tapIdx  = 0;   // siguiente compás a anotar
+let curPage = 0;   // 0-based
+let duration = 0;
+
+// ─── VIDEO ─────────────────────────────────────────────────────────────────────
+const vid = document.getElementById('yt-video');
+
+vid.addEventListener('loadedmetadata', () => {
+  duration = vid.duration;
+  document.getElementById('score-wrapper').style.display = '';
+  addPageMarkers();
+  showPage(0);
+  renderAnnotList();
+  updateProgress();
+  updateTapStatus();
+});
+
+vid.addEventListener('error', () => {
+  document.getElementById('score-area').innerHTML =
+    '<p style="color:#ef4444;padding:20px">Error cargando vídeo. Asegúrate de servir desde la raíz del proyecto.</p>';
+});
+
+// ─── SEEKBAR ───────────────────────────────────────────────────────────────────
+let seeking = false;
+let seekWasPlaying = false;
+
+function seekTo(e) {
+  if (!duration) return;
+  const r = document.getElementById('seekbar').getBoundingClientRect();
+  vid.currentTime = Math.max(0, Math.min(1, (e.clientX - r.left) / r.width)) * duration;
+}
+
+const sbWrap = document.getElementById('seekbar-wrap');
+sbWrap.addEventListener('pointerdown', e => {
+  if (!duration) return;
+  seekWasPlaying = !vid.paused;
+  if (seekWasPlaying) vid.pause();
+  seeking = true;
+  sbWrap.setPointerCapture(e.pointerId);
+  seekTo(e);
+});
+sbWrap.addEventListener('pointermove', e => { if (seeking) seekTo(e); });
+sbWrap.addEventListener('pointerup', () => {
+  if (seeking && seekWasPlaying) vid.play();
+  seeking = false;
+});
+
+function addPageMarkers() {
+  const sb = document.getElementById('seekbar');
+  PAGES.forEach((pg, i) => {
+    if (i === 0) return;
+    const m = document.createElement('div');
+    m.className = 'pg-marker';
+    m.style.left = (pg.t / duration * 100) + '%';
+    m.title = `Pág. ${pg.n}`;
+    sb.appendChild(m);
+  });
+}
+
+// ─── REPRODUCCIÓN ──────────────────────────────────────────────────────────────
+let speed = 1.0;
+
+document.getElementById('play-btn').addEventListener('click', togglePlay);
+function togglePlay() {
+  vid.paused ? vid.play() : vid.pause();
+}
+vid.addEventListener('play',  () => { document.getElementById('play-btn').textContent = '⏸'; });
+vid.addEventListener('pause', () => { document.getElementById('play-btn').textContent = '▶'; });
+
+document.querySelectorAll('.speed-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    speed = parseFloat(btn.dataset.s);
+    vid.playbackRate = speed;
+    document.querySelectorAll('.speed-btn').forEach(b => b.classList.remove('on'));
+    btn.classList.add('on');
+  });
+});
+
+// ─── PÁGINAS ───────────────────────────────────────────────────────────────────
+function showPage(idx) {
+  curPage = Math.max(0, Math.min(idx, 13));
+  const n = curPage + 1;
+  const pad = String(n).padStart(2, '0');
+  document.getElementById('score-img').src = `img/danza_page-${pad}.png`;
+  document.getElementById('page-info').textContent = `Pág. ${n}/14`;
+  hideHL(); renderDots(); renderTarget();
+}
+
+document.getElementById('prev-btn').addEventListener('click', () => showPage(curPage - 1));
+document.getElementById('next-btn').addEventListener('click', () => showPage(curPage + 1));
+document.getElementById('nav-prev').addEventListener('click', () => showPage(curPage - 1));
+document.getElementById('nav-next').addEventListener('click', () => showPage(curPage + 1));
+
+// ─── OVERLAY HELPERS ──────────────────────────────────────────────────────────
+function imgCoords(x, y, w, h) {
+  const img = document.getElementById('score-img');
+  const wr  = document.getElementById('score-wrapper');
+  const ir  = img.getBoundingClientRect();
+  const wR  = wr.getBoundingClientRect();
+  const ox  = ir.left - wR.left;
+  const oy  = ir.top  - wR.top;
+  return {
+    left:   (ox + x * ir.width)  + 'px',
+    top:    (oy + y * ir.height) + 'px',
+    width:  (w * ir.width)       + 'px',
+    height: (h * ir.height)      + 'px',
+  };
+}
+
+function hideHL() { document.getElementById('mhl').style.display = 'none'; }
+
+function updateHL(t) {
+  const pageN = curPage + 1;
+  const pa = annotations
+    .filter(a => a.page === pageN && a.done)
+    .sort((a, b) => a.time - b.time);
+  if (!pa.length) { hideHL(); return; }
+  let active = null;
+  for (const a of pa) { if (a.time <= t) active = a; }
+  if (!active) { hideHL(); return; }
+  const idx  = pa.indexOf(active);
+  const next = pa[idx + 1];
+  const w = (next && Math.abs(next.y - active.y) < Y_THR)
+    ? Math.max(next.x - active.x, 0.04)
+    : Math.max(0.95 - active.x, 0.04);
+  const hl = document.getElementById('mhl');
+  Object.assign(hl.style, { display: 'block', ...imgCoords(active.x, active.y - HL_TOP, w, HL_H) });
+}
+
+function renderTarget() {
+  const tgt = document.getElementById('tgt');
+  if (tapIdx >= annotations.length) { tgt.style.display = 'none'; return; }
+  const a = annotations[tapIdx];
+  if (a.page !== curPage + 1) { tgt.style.display = 'none'; return; }
+  // calcular ancho igual que HL
+  const pageAnnots = annotations.filter(p => p.page === a.page).sort((a,b) => a.time - b.time);
+  const ai   = pageAnnots.findIndex(p => p === a);
+  const next = pageAnnots[ai + 1];
+  const w = (next && Math.abs(next.y - a.y) < Y_THR)
+    ? Math.max(next.x - a.x, 0.04)
+    : Math.max(0.95 - a.x, 0.04);
+  Object.assign(tgt.style, { display: 'block', ...imgCoords(a.x, a.y - HL_TOP, w, HL_H) });
+}
+
+function renderDots() {
+  document.querySelectorAll('.adot').forEach(d => d.remove());
+  const wrapper = document.getElementById('score-wrapper');
+  const img = document.getElementById('score-img');
+  const ir  = img.getBoundingClientRect();
+  const wR  = wrapper.getBoundingClientRect();
+  const ox  = ir.left - wR.left;
+  const oy  = ir.top  - wR.top;
+
+  annotations
+    .filter(a => a.page === curPage + 1 && a.done)
+    .forEach(a => {
+      const d = document.createElement('div');
+      d.className = 'adot';
+      d.style.left = (ox + a.x * ir.width)  + 'px';
+      d.style.top  = (oy + a.y * ir.height) + 'px';
+      d.title = `cc.${annotations.indexOf(a) + 1} · ${fmtMs(a.time)}`;
+      wrapper.appendChild(d);
+    });
+}
+
+// ─── TAP ───────────────────────────────────────────────────────────────────────
+function doTap() {
+  if (tapIdx >= annotations.length) return;
+  annotations[tapIdx].time = vid.currentTime;
+  annotations[tapIdx].done = true;
+  tapIdx++;
+  // auto-avanzar página si el siguiente compás está en otra página
+  if (tapIdx < annotations.length) {
+    const nextPage = annotations[tapIdx].page;
+    if (nextPage !== curPage + 1) showPage(nextPage - 1);
+  }
+  updateTapStatus();
+  updateProgress();
+  renderDots();
+  renderTarget();
+  renderAnnotList();
+}
+
+function doUndo() {
+  if (tapIdx === 0) return;
+  tapIdx--;
+  annotations[tapIdx].done = false;
+  const pg = annotations[tapIdx].page;
+  if (pg !== curPage + 1) showPage(pg - 1);
+  updateTapStatus();
+  updateProgress();
+  renderDots();
+  renderTarget();
+  renderAnnotList();
+}
+
+function doSkip() {
+  if (tapIdx >= annotations.length) return;
+  tapIdx++;
+  if (tapIdx < annotations.length) {
+    const nextPage = annotations[tapIdx].page;
+    if (nextPage !== curPage + 1) showPage(nextPage - 1);
+  }
+  updateTapStatus();
+  updateProgress();
+  renderTarget();
+}
+
+document.getElementById('tap-btn').addEventListener('click', doTap);
+document.getElementById('undo-btn').addEventListener('click', doUndo);
+document.getElementById('skip-btn').addEventListener('click', doSkip);
+
+function updateTapStatus() {
+  const el = document.getElementById('tap-cc');
+  const lbl = document.getElementById('tap-label');
+  if (tapIdx >= annotations.length) {
+    el.textContent = '✓ Listo';
+    lbl.textContent = 'Todos los compases anotados';
+  } else {
+    el.textContent = `cc. ${tapIdx + 1}`;
+    lbl.textContent = `Pág. ${annotations[tapIdx].page} · siguiente a anotar`;
+  }
+}
+
+function updateProgress() {
+  const done = annotations.filter(a => a.done).length;
+  document.getElementById('progress-info').textContent = `${done} / ${annotations.length}`;
+}
+
+function renderAnnotList() {
+  const start = Math.max(0, tapIdx - 3);
+  const end   = Math.min(annotations.length, tapIdx + 6);
+  let html = '';
+  for (let i = start; i < end; i++) {
+    const a = annotations[i];
+    const cls = i < tapIdx ? 'arow-done' : i === tapIdx ? 'arow-current' : 'arow-future';
+    const t   = a.done ? fmtMs(a.time) : '—:——.———';
+    html += `<div class="${cls}">${i < tapIdx ? '✓' : i === tapIdx ? '→' : '·'} cc.${i+1} pág.${a.page} ${t}</div>`;
+  }
+  document.getElementById('annot-list').innerHTML = html;
+}
+
+// ─── CLICK EN PARTITURA (corrección manual) ────────────────────────────────────
+document.getElementById('score-img').addEventListener('click', e => {
+  const img = e.currentTarget;
+  const r   = img.getBoundingClientRect();
+  const x   = (e.clientX - r.left) / r.width;
+  const y   = (e.clientY - r.top)  / r.height;
+  const pageN = curPage + 1;
+  const pa    = annotations.filter(a => a.page === pageN);
+  if (!pa.length) return;
+  let best = null, bestD = Infinity;
+  for (const a of pa) {
+    const d = Math.hypot((a.x - x) * 1.5, a.y - y);
+    if (d < bestD) { bestD = d; best = a; }
+  }
+  if (!best || bestD > 0.3) return;
+  const gIdx = annotations.indexOf(best);
+  annotations[gIdx].time = vid.currentTime;
+  annotations[gIdx].done = true;
+  // Avanzar tapIdx si estábamos en este o antes
+  if (gIdx >= tapIdx) tapIdx = gIdx + 1;
+  updateTapStatus();
+  updateProgress();
+  renderDots();
+  renderTarget();
+  renderAnnotList();
+});
+
+// ─── RAF LOOP ──────────────────────────────────────────────────────────────────
+function fmtTime(s) {
+  return `${Math.floor(s/60)}:${String(Math.floor(s%60)).padStart(2,'0')}`;
+}
+function fmtMs(s) {
+  const m = Math.floor(s/60);
+  const sec = (s % 60).toFixed(3);
+  return `${m}:${sec.padStart(6,'0')}`;
+}
+
+(function tick() {
+  requestAnimationFrame(tick);
+  if (!duration) return;
+  const t   = vid.currentTime;
+  const pct = Math.min(t / duration * 100, 100);
+  document.getElementById('seekfill').style.width = pct + '%';
+  document.getElementById('seekt').style.left = pct + '%';
+  document.getElementById('time-info').textContent = `${fmtTime(t)} / ${fmtTime(duration)}`;
+  document.getElementById('tap-time-current').textContent = `Tiempo vídeo: ${fmtMs(t)}`;
+  if (!vid.paused) updateHL(t);
+})();
+
+// ─── TECLADO ───────────────────────────────────────────────────────────────────
+document.addEventListener('keydown', e => {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+  if (e.code === 'Space')     { e.preventDefault(); togglePlay(); }
+  if (e.code === 'Enter')     { e.preventDefault(); doTap(); }
+  if (e.code === 'Backspace') { e.preventDefault(); doUndo(); }
+  if (e.code === 'Tab')       { e.preventDefault(); doSkip(); }
+  if (e.code === 'ArrowLeft') { e.preventDefault(); showPage(curPage - 1); }
+  if (e.code === 'ArrowRight'){ e.preventDefault(); showPage(curPage + 1); }
+});
+
+// ─── EXPORT / IMPORT ───────────────────────────────────────────────────────────
+document.getElementById('export-btn').addEventListener('click', () => {
+  const lines = annotations
+    .map(a => `  {"page":${a.page},"time":${a.time.toFixed(6)},"x":${a.x},"y":${a.y}}`)
+    .join(',\n');
+  const js = `// Anotaciones temporales para vídeo YouTube\n// ${annotations.filter(a=>a.done).length}/${annotations.length} compases anotados\nconst ANNOTATIONS_YT_DATA = [\n${lines}\n];\n`;
+  document.getElementById('export-textarea').value = js;
+  document.getElementById('export-panel').style.display = 'block';
+});
+
+document.getElementById('copy-btn').addEventListener('click', () => {
+  navigator.clipboard.writeText(document.getElementById('export-textarea').value)
+    .then(() => { document.getElementById('copy-btn').textContent = '✓ Copiado'; setTimeout(() => { document.getElementById('copy-btn').textContent = 'Copiar'; }, 1500); });
+});
+
+document.getElementById('close-export-btn').addEventListener('click', () => {
+  document.getElementById('export-panel').style.display = 'none';
+});
+
+document.getElementById('import-btn').addEventListener('click', () =>
+  document.getElementById('import-input').click());
+
+document.getElementById('import-input').addEventListener('change', e => {
+  const f = e.target.files[0];
+  if (!f) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      const data = JSON.parse(ev.target.result);
+      const imported = data.annotations || data;
+      if (!Array.isArray(imported)) throw new Error();
+      // Fusionar: preservar x,y de ANNOTATIONS_DATA, importar time y done
+      imported.forEach((imp, i) => {
+        if (annotations[i]) {
+          annotations[i].time = imp.time ?? annotations[i].time;
+          annotations[i].done = imp.done ?? (imp.time !== undefined);
+        }
+      });
+      tapIdx = annotations.findIndex(a => !a.done);
+      if (tapIdx === -1) tapIdx = annotations.length;
+      updateTapStatus(); updateProgress();
+      renderDots(); renderTarget(); renderAnnotList();
+    } catch { alert('JSON inválido'); }
+  };
+  reader.readAsText(f);
+  e.target.value = '';
+});
+
+document.getElementById('reset-btn').addEventListener('click', () => {
+  if (!confirm('¿Resetear todos los tiempos anotados?')) return;
+  annotations.forEach(a => { a.done = false; });
+  tapIdx = 0;
+  updateTapStatus(); updateProgress();
+  renderDots(); renderTarget(); renderAnnotList();
+});
+
+// resize
+window.addEventListener('resize', () => { renderDots(); renderTarget(); hideHL(); });
+
+// ─── INIT ──────────────────────────────────────────────────────────────────────
+updateAnnotCount();
+function updateAnnotCount() { updateProgress(); }
+</script>
+</body>
+</html>
