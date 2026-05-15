@@ -1688,9 +1688,9 @@ function setupFullscreenAnnotation() {
 // VÍDEO DE REFERENCIA LOCAL
 // ==========================================
 
-let pointA = 0;
-let pointB = null;
-let loopActive = false;
+var pointA = 0;
+var pointB = null;
+var loopActive = false;
 let currentRate = 1.0;
 let baseBpm = 96;
 let tapTimes = [];

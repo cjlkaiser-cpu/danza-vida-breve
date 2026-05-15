@@ -86,12 +86,6 @@
 
         <!-- Main Content -->
         <main class="main-content" id="mainContent">
-            <!-- Tab switcher -->
-            <div class="main-tab-bar">
-                <button class="main-tab-btn active" id="tabEstudio" onclick="scorePlayerHide()">Estudio</button>
-                <button class="main-tab-btn" id="tabPartitura" onclick="scorePlayerShow()">🎼 Partitura</button>
-            </div>
-
             <div class="pasaje-view" id="pasajeView">
                 <!-- Header -->
                 <div class="variation-header">
@@ -184,33 +178,56 @@
 
                 <!-- Score Image -->
                 <div class="manuscript-section">
-                    <h3>Partitura <span class="zoom-hint">— toca para ampliar</span></h3>
-                    <div class="annotation-toolbar" id="annotationToolbar">
-                        <button class="anno-btn active" id="annoPencil" title="Lápiz">✏</button>
-                        <button class="anno-btn" id="annoEraser" title="Goma">◻</button>
-                        <div class="anno-colors">
-                            <button class="anno-color-btn active" data-color="#dc2626" title="Rojo" style="background:#dc2626"></button>
-                            <button class="anno-color-btn" data-color="#1d4ed8" title="Azul" style="background:#1d4ed8"></button>
-                            <button class="anno-color-btn" data-color="#15803d" title="Verde" style="background:#15803d"></button>
-                            <button class="anno-color-btn" data-color="#d97706" title="Naranja" style="background:#d97706"></button>
+                    <h3>Partitura</h3>
+                    <!-- Controles score player -->
+                    <div class="sp-controls-row">
+                        <button class="nav-btn sp-pg-btn" id="spPrevPage" disabled>◀</button>
+                        <span class="sp-page-info" id="spPageInfo">1 / 14</span>
+                        <button class="nav-btn sp-pg-btn" id="spNextPage">▶</button>
+                        <span class="sp-measure-info" id="spMeasureInfo"></span>
+                        <span class="sp-spacer"></span>
+                        <span class="sp-time" id="spTimeDisplay">0:00</span>
+                        <button class="loop-btn" id="spLoopBtn">⟳ Loop</button>
+                        <button class="loop-btn" id="spClearLoop">✕</button>
+                        <span class="sp-loop-status" id="spLoopStatus"></span>
+                    </div>
+                    <div class="sp-seekbar-wrap" id="spSeekWrap">
+                        <div class="sp-seekbar-fill" id="spSeekFill"></div>
+                        <div class="sp-seekbar-thumb" id="spSeekThumb"></div>
+                    </div>
+                    <div class="sp-wrapper" id="spWrapper">
+                        <img id="spImg" src="" alt="Partitura" draggable="false">
+                        <div class="sp-hl" id="spHL"></div>
+                    </div>
+                    <!-- Elementos legados ocultos — app.js los necesita -->
+                    <div hidden>
+                        <div class="annotation-toolbar" id="annotationToolbar">
+                            <button class="anno-btn active" id="annoPencil">✏</button>
+                            <button class="anno-btn" id="annoEraser">◻</button>
+                            <div class="anno-colors">
+                                <button class="anno-color-btn active" data-color="#dc2626" style="background:#dc2626"></button>
+                                <button class="anno-color-btn" data-color="#1d4ed8" style="background:#1d4ed8"></button>
+                                <button class="anno-color-btn" data-color="#15803d" style="background:#15803d"></button>
+                                <button class="anno-color-btn" data-color="#d97706" style="background:#d97706"></button>
+                            </div>
+                            <button class="anno-clear-btn" id="annoClear">✕</button>
+                            <button class="anno-btn" id="annoOpenFs">⛶</button>
                         </div>
-                        <button class="anno-clear-btn" id="annoClear" title="Borrar anotaciones">✕</button>
-                    <button class="anno-btn anno-open-fs" id="annoOpenFs" title="Pantalla completa">⛶</button>
-                    </div>
-                    <div class="manuscript-container">
-                        <div class="score-annotation-wrapper">
-                            <img id="manuscriptImg" src="" alt="Partitura" title="Toca para ampliar">
-                            <canvas id="annotationCanvas" class="annotation-canvas"></canvas>
+                        <div class="manuscript-container">
+                            <div class="score-annotation-wrapper">
+                                <img id="manuscriptImg" src="" alt="">
+                                <canvas id="annotationCanvas" class="annotation-canvas"></canvas>
+                            </div>
                         </div>
+                        <div class="score-page-nav">
+                            <button id="scorePrevBtn" disabled>◀</button>
+                            <span id="pageNavInfo">1 / 14</span>
+                            <button id="scoreNextBtn">▶</button>
+                            <button id="autoFollowBtn">Auto</button>
+                            <button id="markTimeBtn">Marcar</button>
+                        </div>
+                        <div id="pageMarkHint"></div>
                     </div>
-                    <div class="score-page-nav">
-                        <button class="page-nav-btn" id="scorePrevBtn" title="Página anterior (←)" disabled>◀ Anterior</button>
-                        <span class="page-nav-info" id="pageNavInfo">1 / 14</span>
-                        <button class="page-nav-btn" id="scoreNextBtn" title="Página siguiente (→)">Siguiente ▶</button>
-                        <button class="page-nav-btn page-auto-btn" id="autoFollowBtn" title="Pasar páginas automáticamente según el audio">⏱ Auto</button>
-                        <button class="page-nav-btn page-mark-btn" id="markTimeBtn" title="Marcar tiempo actual como inicio de esta página">⏺ Marcar</button>
-                    </div>
-                    <div class="page-mark-hint" id="pageMarkHint"></div>
                 </div>
 
                 <!-- Fullscreen overlay -->
@@ -424,37 +441,6 @@
                 </div>
             </div>
 
-            <!-- ── Score Player View ──────────────────────────────────── -->
-            <div class="sp-view" id="scorePlayerView" style="display:none">
-                <div class="sp-topbar">
-                    <div class="sp-topbar-left">
-                        <button class="sp-nav-btn" id="spPrevPage" disabled>◀</button>
-                        <span class="sp-page-info" id="spPageInfo">1 / 14</span>
-                        <button class="sp-nav-btn" id="spNextPage">▶</button>
-                    </div>
-                    <div class="sp-topbar-center">
-                        <span class="sp-measure-info" id="spMeasureInfo"></span>
-                    </div>
-                    <div class="sp-topbar-right">
-                        <span class="sp-time" id="spTimeDisplay">0:00</span>
-                    </div>
-                </div>
-                <div class="sp-seekbar-wrap" id="spSeekWrap">
-                    <div class="sp-seekbar-fill" id="spSeekFill"></div>
-                    <div class="sp-seekbar-thumb" id="spSeekThumb"></div>
-                </div>
-                <div class="sp-loop-bar">
-                    <button class="sp-ctrl-btn" id="spLoopBtn">⟳ Loop</button>
-                    <button class="sp-ctrl-btn" id="spClearLoop">✕ Borrar</button>
-                    <span class="sp-loop-status" id="spLoopStatus"></span>
-                </div>
-                <div class="sp-score-area">
-                    <div class="sp-wrapper" id="spWrapper">
-                        <img id="spImg" src="" alt="Partitura" draggable="false">
-                        <div class="sp-hl" id="spHL"></div>
-                    </div>
-                </div>
-            </div>
         </main>
     </div>
 

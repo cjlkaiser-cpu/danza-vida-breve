@@ -325,13 +325,6 @@
       }
     });
 
-    // Teclas (flechas = navegación de página cuando el tab está activo)
-    document.addEventListener('keydown', e => {
-      if (!active || e.target.tagName === 'INPUT') return;
-      if (e.code === 'ArrowRight') { e.preventDefault(); showPage(curPage + 1); }
-      if (e.code === 'ArrowLeft')  { e.preventDefault(); showPage(curPage - 1); }
-    });
-
     // Resize: reposicionar overlays
     window.addEventListener('resize', () => {
       if (active) { renderMarkers(); hideHL(); }
@@ -340,29 +333,8 @@
     initialized = true;
   }
 
-  // ── API pública ──────────────────────────────────────────────────────────────
-  window.scorePlayerShow = function () {
-    if (!initialized) init();
-    active = true;
-    $('scorePlayerView').style.display = 'flex';
-    $('pasajeView').style.display      = 'none';
-    $('tabEstudio').classList.remove('active');
-    $('tabPartitura').classList.add('active');
-
-    // Sincronizar página con posición actual del audio
-    const aud = audio();
-    if (aud?.duration) showPage(pageForTime(aud.currentTime));
-
-    renderMarkers();
-    rafId = requestAnimationFrame(tick);
-  };
-
-  window.scorePlayerHide = function () {
-    active = false;
-    cancelAnimationFrame(rafId);
-    $('scorePlayerView').style.display = 'none';
-    $('pasajeView').style.display      = '';
-    $('tabEstudio').classList.add('active');
-    $('tabPartitura').classList.remove('active');
-  };
+  // ── Auto-init (scripts cargan después del DOM) ───────────────────────────────
+  init();
+  active = true;
+  rafId = requestAnimationFrame(tick);
 })();
