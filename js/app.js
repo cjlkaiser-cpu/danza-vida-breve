@@ -2252,8 +2252,11 @@ function setupAudioPlayer() {
                 durEl.textContent = fmt(audio.duration);
             }, { once: true });
 
-            // Mostrar el elemento de video solo cuando la fuente es YT
-            audio.style.display = (src === 'yt') ? 'block' : 'none';
+            // Mostrar vídeo y aviso solo cuando la fuente es YT
+            const isYt = src === 'yt';
+            audio.style.display = isYt ? 'block' : 'none';
+            const ytWarn = document.getElementById('ytSyncWarning');
+            if (ytWarn) ytWarn.style.display = isYt ? 'block' : 'none';
 
             const labels = {
                 both: 'Ambas guitarras', guitar1: 'Guitarra I sola',
